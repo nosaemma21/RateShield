@@ -1,5 +1,7 @@
 //extensions for endpoint builder to helps me prevent clutter in Program.cs
 
+using RateShield.Core.RateLimiting;
+
 namespace RateShield.Gateway.Extensions;
 
 public static class EndpointRouteBuilderExtensions
@@ -16,6 +18,15 @@ public static class EndpointRouteBuilderExtensions
 
         // for yarp
         endpoints.MapReverseProxy();
+
+        // 🧪🧪
+        // endpoints.MapGet(
+        //     "/debug/policy/{routeId}",
+        //     (string routeId, IRateLimitPolicyResolver resolver) =>
+        //     {
+        //         return resolver.ResolvePolicy(routeId);
+        //     }
+        // );
 
         return endpoints;
     }
