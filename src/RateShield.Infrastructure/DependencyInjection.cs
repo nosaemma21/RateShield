@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using RateShield.Core.RateLimiting;
+using RateShield.Core.Time;
+using RateShield.Infrastructure.Time;
 
 namespace RateShield.Infrastructure;
 
@@ -9,6 +11,8 @@ public static class DependencyInjection
     {
         //////////🚦🚦🚦//////////
         services.AddSingleton<IRateLimitPolicyResolver, ConfigurationRateLimitPolicyResolver>();
+        services.AddSingleton<IClock, SystemClock>(); //🧪🧪
+        services.AddSingleton<ITokenBucketLimiter, TokenBucketLimiter>();
 
         return services;
     }
