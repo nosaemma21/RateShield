@@ -2,16 +2,20 @@ using RateShield.Gateway.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//addeing the rateshield options
+//adding the rateshield options
 builder
     .Services.AddRateShieldOptions(builder.Configuration)
-    .AddRateShieldReverseProxy(builder.Configuration);
+    .AddRateShieldReverseProxy(builder.Configuration)
+    .AddRateShieldHealthChecks();
 
 var app = builder.Build();
 
-app.MapGet("/", () => "RateShield gateway is running.");
+// app.MapGet("/", () => "RateShield gateway is running.");
 
 // using the rate shield rv proxy
-app.MapReverseProxy();
+// app.MapReverseProxy();
+
+// endpoints in their file
+app.MapRateShieldEndpoints();
 
 app.Run();

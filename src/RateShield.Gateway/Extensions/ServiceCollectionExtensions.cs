@@ -57,4 +57,12 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    //extension to add health checks
+    public static IServiceCollection AddRateShieldHealthChecks(this IServiceCollection services)
+    {
+        //basic
+        services.AddHealthChecks();
+        return services;
+    }
 }
