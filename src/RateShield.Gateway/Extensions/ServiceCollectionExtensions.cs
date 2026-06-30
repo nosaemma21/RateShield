@@ -46,4 +46,15 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    // extension to add rv proxy (yarp)
+    public static IServiceCollection AddRateShieldReverseProxy(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.AddReverseProxy().LoadFromConfig(configuration.GetSection("ReverseProxy"));
+
+        return services;
+    }
 }
