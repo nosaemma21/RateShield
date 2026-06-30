@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 //adding the rateshield options
 builder
     .Services.AddRateShieldOptions(builder.Configuration)
+    .AddRateShieldApplicationServices()
     .AddRateShieldReverseProxy(builder.Configuration)
     .AddRateShieldHealthChecks();
 

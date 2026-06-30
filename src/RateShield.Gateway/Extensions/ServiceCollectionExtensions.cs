@@ -1,4 +1,5 @@
 using RateShield.Core.Configuration;
+using RateShield.Infrastructure;
 
 namespace RateShield.Gateway.Extensions;
 
@@ -63,6 +64,15 @@ public static class ServiceCollectionExtensions
     {
         //basic
         services.AddHealthChecks();
+        return services;
+    }
+
+    //added the services from the infra.
+    public static IServiceCollection AddRateShieldApplicationServices(
+        this IServiceCollection services
+    )
+    {
+        services.AddRateShieldInfrastructure();
         return services;
     }
 }
