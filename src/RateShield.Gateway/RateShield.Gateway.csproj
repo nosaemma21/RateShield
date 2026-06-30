@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <ItemGroup>
     <ProjectReference Include="..\RateShield.Core\RateShield.Core.csproj" />
     <ProjectReference Include="..\RateShield.Infrastructure\RateShield.Infrastructure.csproj" />
@@ -15,5 +14,4 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
 </Project>
