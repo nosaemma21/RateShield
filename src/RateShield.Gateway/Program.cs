@@ -17,6 +17,10 @@ var app = builder.Build();
 // app.MapReverseProxy();
 
 // endpoints in their file
+
+app.UseRouting(); //--------------\\
+app.UseRateShieldRateLimiting(); //------------route before mw so "context.GetEndpoint()" is not null
+
 app.MapRateShieldEndpoints();
 
 app.Run();
