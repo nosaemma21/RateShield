@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
+using RateShield.Core.RateLimiting;
 
-namespace RateShield.Core.RateLimiting;
+namespace RateShield.Infrastructure.RateLimiting;
 
 public sealed class ConfigurationRateLimitPolicyResolver : IRateLimitPolicyResolver
 {
