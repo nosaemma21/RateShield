@@ -24,3 +24,6 @@ app.UseRateShieldRateLimiting(); //------------route before mw so "context.GetEn
 app.MapRateShieldEndpoints();
 
 app.Run();
+
+//for test visibility
+public partial class Program { }

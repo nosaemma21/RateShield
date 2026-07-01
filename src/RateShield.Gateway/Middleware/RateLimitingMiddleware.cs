@@ -57,14 +57,32 @@ public sealed class RateLimitingMiddleware
     }
 
     // helper
-    private static string? ResolveRouteId(HttpContext context)
+    // private static string? ResolveRouteId(HttpContext context)
+    // {
+    //     //retrieve api endpoint
+    //     var endpoint = context.GetEndpoint();
+
+    //     var routeModel = endpoint?.Metadata.GetMetadata<RouteModel>();
+
+    //     return routeModel?.Config.RouteId;
+    // }
+
+    private string? ResolveRouteId(HttpContext context)
     {
-        //retrieve api endpoint
         var endpoint = context.GetEndpoint();
 
         var routeModel = endpoint?.Metadata.GetMetadata<RouteModel>();
 
-        return routeModel?.Config.RouteId;
+        if (!string.IsNullOrWhiteSpace(routeModel?.Config.RouteId))
+        {
+            return routeModel.Config.RouteId;
+        }
+
+        var displayName = endpoint?.DisplayName;
+
+        return !string.IsNullOrWhiteSpace(displayName) && _options.Routes.ContainsKey(displayName)
+            ? displayName
+            : null;
     }
 
     //helper
