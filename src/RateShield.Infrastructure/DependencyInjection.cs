@@ -15,6 +15,8 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>(); //🧪🧪
         services.AddSingleton<ITokenBucketLimiter, TokenBucketLimiter>();
         services.AddSingleton<ITokenBucketStore, InMemoryTokenBucketStore>(); //redis later
+        services.AddSingleton<TokenBucketLockProvider>();
+        services.AddSingleton<IRateLimitEvaluator, RateLimitEvaluator>();
 
         return services;
     }
