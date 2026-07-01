@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -25,5 +24,4 @@
     <ProjectReference Include="..\..\src\RateShield.Gateway\RateShield.Gateway.csproj" />
     <ProjectReference Include="..\..\src\RateShield.Core\RateShield.Core.csproj" />
   </ItemGroup>
-
 </Project>
