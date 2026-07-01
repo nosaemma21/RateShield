@@ -4,12 +4,13 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
 {
     public RateLimitDecision Evaluate(RateLimitRequest request, TokenBucketState bucket)
     {
-        //refilling earned tokens
+        //refilling before evaluation because a bucket may have earned tokens since the previous request & decision should use cleanest state
         Refill(request, bucket);
 
+        //used by cleanup workers to remove idle buckets
         bucket.LastSeenAt = request.RequestedAt;
 
-        // allow if enough tokens exist
+        // enough tokens = allow
         if (bucket.AvailableTokens >= request.Policy.RequestCost)
         {
             bucket.AvailableTokens -= request.Policy.RequestCost;
@@ -22,6 +23,7 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
             );
         }
 
+        // not enough = retry
         var retryAfter = CalculateRetryAfter(request, bucket);
 
         return RateLimitDecision.Rejected(
@@ -36,6 +38,7 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
     // to refil the tokens
     public static void Refill(RateLimitRequest request, TokenBucketState bucket)
     {
+        // only refills after >= 1 full refill period elapsed
         var elapsed = request.RequestedAt - bucket.LastRefilledAt;
 
         if (elapsed < request.Policy.RefillPeriod)
@@ -43,6 +46,7 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
             return;
         }
 
+        // only full refill periodcounted. partials are preserved by keeping LastRefilledAt aligned to last completed refill
         var periodsElapsed = (int)(elapsed.Ticks / request.Policy.RefillPeriod.Ticks);
 
         if (periodsElapsed <= 0)
@@ -50,13 +54,16 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
             return;
         }
 
+        // each completed period adds Refill tokens
         var tokensToAdd = periodsElapsed * request.Policy.RefillTokens;
 
+        // making sure bucket cant take more than it's burst capacity
         bucket.AvailableTokens = Math.Min(
             request.Policy.Capacity,
             bucket.AvailableTokens + tokensToAdd
         );
 
+        // timestamp +++ only by complete periods.(no fraction leftover time)
         bucket.LastRefilledAt = bucket.LastRefilledAt.AddTicks(
             periodsElapsed * request.Policy.RefillPeriod.Ticks
         );
@@ -66,8 +73,8 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
     {
         var tokensNeeded = request.Policy.RequestCost - bucket.AvailableTokens;
 
-        var periodsNeeded = (int)
-            Math.Ceiling(tokensNeeded / (double)request.Policy.RefillPeriod.Ticks);
+        //converting missing tokens to refill periods
+        var periodsNeeded = (int)Math.Ceiling(tokensNeeded / (double)request.Policy.RefillTokens);
 
         var nextAvailableAt = bucket.LastRefilledAt.AddTicks(
             periodsNeeded * request.Policy.RefillPeriod.Ticks
@@ -75,6 +82,7 @@ public sealed class TokenBucketLimiter : ITokenBucketLimiter
 
         var retryAfter = nextAvailableAt - request.RequestedAt;
 
+        // timing lands in past, never returns negative
         return retryAfter <= TimeSpan.Zero ? TimeSpan.Zero : retryAfter;
     }
 
