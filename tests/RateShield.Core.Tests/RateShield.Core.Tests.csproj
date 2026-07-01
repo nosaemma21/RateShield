@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RateShield.Core\RateShield.Core.csproj" />
+    <ProjectReference Include="..\..\src\RateShield.Infrastructure\RateShield.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
