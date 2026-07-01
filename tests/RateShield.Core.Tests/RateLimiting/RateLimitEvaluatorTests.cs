@@ -113,6 +113,44 @@ public sealed class RateLimitEvaluatorTests
         Assert.True(secondClientDecision.IsAllowed);
     }
 
+    [Fact]
+    public async Task Evaluate_WhenSameClientRequestsAreConcurrent_AllowsOnlyCapacity()
+    {
+        // arrange
+        var now = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+
+        var policy = new RateLimitPolicy(
+            Name: "Default",
+            Capacity: 10,
+            RefillTokens: 1,
+            RefillPeriod: TimeSpan.FromMinutes(1),
+            RequestCost: 1
+        );
+
+        var evaluator = CreateEvaluator(now, policy);
+
+        // act
+        var tasks = Enumerable
+            .Range(0, 50)
+            .Select(_ =>
+                Task.Run(() =>
+                    evaluator.Evaluate(
+                        new RateLimitEvaluationRequest(Client: Client, RouteId: "sample-api")
+                    )
+                )
+            )
+            .ToArray();
+
+        var decisions = await Task.WhenAll(tasks);
+
+        var allowedCount = decisions.Count(decision => decision.IsAllowed);
+        var rejectedCount = decisions.Count(decision => !decision.IsAllowed);
+
+        // assert
+        Assert.Equal(10, allowedCount);
+        Assert.Equal(40, rejectedCount);
+    }
+
     private static RateLimitEvaluator CreateEvaluator(DateTimeOffset now, RateLimitPolicy policy)
     {
         return CreateEvaluator(new FakeClock(now), policy);
