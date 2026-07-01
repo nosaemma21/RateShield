@@ -1,5 +1,6 @@
 //extensions for endpoint builder to helps me prevent clutter in Program.cs
 
+using RateShield.Core.Identity;
 using RateShield.Core.RateLimiting;
 
 namespace RateShield.Gateway.Extensions;
@@ -27,6 +28,15 @@ public static class EndpointRouteBuilderExtensions
         //         return resolver.ResolvePolicy(routeId);
         //     }
         // );
+
+        //🧪🧪
+        endpoints.MapGet(
+            "/debug/client",
+            (HttpContext context, IClientIdentityProvider<HttpContext> identityProvider) =>
+            {
+                return identityProvider.ResolveClient(context);
+            }
+        );
 
         return endpoints;
     }

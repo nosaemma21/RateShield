@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
+using RateShield.Core.Identity;
+using RateShield.Gateway.Identity;
 using RateShield.Gateway.Validation;
 using RateShield.Infrastructure;
 
@@ -48,6 +50,7 @@ public static class ServiceCollectionExtensions
     )
     {
         services.AddRateShieldInfrastructure();
+        services.AddSingleton<IClientIdentityProvider<HttpContext>, HttpClientIdentityProvider>();
         return services;
     }
 }
