@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using RateShield.Core.RateLimiting;
 using RateShield.Core.Time;
+using RateShield.Infrastructure.Cleanup;
 using RateShield.Infrastructure.RateLimiting;
 using RateShield.Infrastructure.Time;
 
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<ITokenBucketStore, InMemoryTokenBucketStore>(); //redis later
         services.AddSingleton<TokenBucketLockProvider>();
         services.AddSingleton<IRateLimitEvaluator, RateLimitEvaluator>();
+        services.AddSingleton<ITokenBucketCleanupService, TokenBucketCleanupService>();
         services.AddHostedService<TokenBucketCleanupWorker>();
 
         return services;

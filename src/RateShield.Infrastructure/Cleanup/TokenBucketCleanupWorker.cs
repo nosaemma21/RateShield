@@ -6,22 +6,17 @@ using RateShield.Core.Time;
 
 public sealed class TokenBucketCleanupWorker : BackgroundService
 {
-    private readonly ITokenBucketStore _bucketStore;
-    private readonly IClock _clock;
     private readonly RateShieldOptions _options;
-    private readonly ILogger<TokenBucketCleanupWorker> _logger;
+    private readonly ITokenBucketCleanupService _cleanupService;
 
     public TokenBucketCleanupWorker(
-        ITokenBucketStore bucketStore,
-        IClock clock,
         RateShieldOptions options,
-        ILogger<TokenBucketCleanupWorker> logger
+        ILogger<TokenBucketCleanupWorker> logger,
+        ITokenBucketCleanupService cleanupService
     )
     {
-        _bucketStore = bucketStore;
-        _clock = clock;
         _options = options;
-        _logger = logger;
+        _cleanupService = cleanupService;
     }
 
     //bg worker
@@ -35,37 +30,37 @@ public sealed class TokenBucketCleanupWorker : BackgroundService
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            RemoveIdleBuckets();
+            _cleanupService.RemoveIdleBuckets();
         }
     }
 
     //helper
-    private void RemoveIdleBuckets()
-    {
-        var idleBefore = _clock.UtcNow.AddSeconds(-_options.CleanUp.BucketIdleTimeoutSeconds);
+    // private void RemoveIdleBuckets()
+    // {
+    //     var idleBefore = _clock.UtcNow.AddSeconds(-_options.CleanUp.BucketIdleTimeoutSeconds);
 
-        var idleKeys = _bucketStore.GetIdleKeys(
-            idleBefore: idleBefore,
-            maxKeys: _options.CleanUp.MaxBucketsPerScan
-        );
+    //     var idleKeys = _bucketStore.GetIdleKeys(
+    //         idleBefore: idleBefore,
+    //         maxKeys: _options.CleanUp.MaxBucketsPerScan
+    //     );
 
-        var removedCount = 0;
+    //     var removedCount = 0;
 
-        foreach (var key in idleKeys)
-        {
-            if (_bucketStore.TryRemove(key))
-            {
-                removedCount++;
-            }
-        }
+    //     foreach (var key in idleKeys)
+    //     {
+    //         if (_bucketStore.TryRemove(key))
+    //         {
+    //             removedCount++;
+    //         }
+    //     }
 
-        if (removedCount > 0)
-        {
-            _logger.LogInformation(
-                "Removed {RemovedCount} idle token buckets. ActiveBucketCount: {ActiveBucketCount}",
-                removedCount,
-                _bucketStore.Count
-            );
-        }
-    }
+    //     if (removedCount > 0)
+    //     {
+    //         _logger.LogInformation(
+    //             "Removed {RemovedCount} idle token buckets. ActiveBucketCount: {ActiveBucketCount}",
+    //             removedCount,
+    //             _bucketStore.Count
+    //         );
+    //     }
+    // }
 }
