@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
 using RateShield.Core.RateLimiting;
 using RateShield.Core.Time;
@@ -10,12 +11,11 @@ public sealed class TokenBucketCleanupWorker : BackgroundService
     private readonly ITokenBucketCleanupService _cleanupService;
 
     public TokenBucketCleanupWorker(
-        RateShieldOptions options,
-        ILogger<TokenBucketCleanupWorker> logger,
+        IOptions<RateShieldOptions> options,
         ITokenBucketCleanupService cleanupService
     )
     {
-        _options = options;
+        _options = options.Value;
         _cleanupService = cleanupService;
     }
 
