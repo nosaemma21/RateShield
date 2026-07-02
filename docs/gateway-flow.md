@@ -80,14 +80,14 @@ A destination is one concrete backend address inside a cluster.
 For local development:
 
 ```text
-Gateway:        http://localhost:5201
+Gateway:        http://localhost:5011
 SampleBackend:  http://localhost:5255
 ```
 
 So this request:
 
 ```text
-http://localhost:5201/api/hello
+http://localhost:5011/api/hello
 ```
 
 is forwarded to:
@@ -109,7 +109,7 @@ Correct:
 Incorrect:
 
 ```json
-"Address": "http://localhost:5201/"
+"Address": "http://localhost:5011/"
 ```
 
 Pointing YARP to the gateway would create a proxy loop.
