@@ -30,7 +30,7 @@ jobs:
            run: dotnet restore RateShield.sln
 
          - name: Check formatting
-           run: dotnet format RateShield.sln --verify-no-change --verbosity minimal
+           run: dotnet format RateShield.sln --verify-no-changes --verbosity minimal
 
          - name: Audit package vulnerabilities
            run: dotnet list RateShield.sln package --vulnerable --include-transitive
