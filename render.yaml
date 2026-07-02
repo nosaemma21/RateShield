@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: rateshield-gateway
+    runtime: image
+    image:
+      url: ghcr.io/nosaemma21/rateshield-gateway:latest
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - key: RateShield__Storage__Mode
+        value: InMemory
+      - key: RateShield__Storage__FailureBehavior
+        value: FailClosed
+      - key: RateShield__Identity__TrustForwardedHeaders
+        value: "true"
+      - key: RateShield__Policies__Default__Capacity
+        value: "100"
+      - key: RateShield__Policies__Default__RefillTokens
+        value: "10"
+      - key: RateShield__Policies__Default__RefillPeriodSeconds
+        value: "1"
+      - key: RateShield__Policies__Default__RequestCost
+        value: "1"
