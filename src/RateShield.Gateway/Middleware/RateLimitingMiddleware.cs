@@ -15,18 +15,21 @@ public sealed class RateLimitingMiddleware
     private readonly IClientIdentityProvider<HttpContext> _identityProvider;
     private readonly IRateLimitEvaluator _rateLimitEvaluator;
     private RateShieldOptions _options;
+    private readonly ILogger<RateLimitingMiddleware> _logger;
 
     public RateLimitingMiddleware(
         RequestDelegate next,
         IClientIdentityProvider<HttpContext> identityProvider,
         IRateLimitEvaluator rateLimitEvaluator,
-        IOptions<RateShieldOptions> options
+        IOptions<RateShieldOptions> options,
+        ILogger<RateLimitingMiddleware> logger
     )
     {
         _next = next;
         _identityProvider = identityProvider;
         _rateLimitEvaluator = rateLimitEvaluator;
         _options = options.Value;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -45,6 +48,8 @@ public sealed class RateLimitingMiddleware
         var decision = _rateLimitEvaluator.Evaluate(
             new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
         );
+
+        LogRateLimitDecison(routeId, client, decision);
 
         AddRateLimitHeaders(context, decision);
 
@@ -118,5 +123,40 @@ public sealed class RateLimitingMiddleware
         };
 
         await context.Response.WriteAsJsonAsync(body);
+    }
+
+    //helper
+    private void LogRateLimitDecison(
+        string routeId,
+        ClientIdentity client,
+        RateLimitDecision decision
+    )
+    {
+        if (decision.IsAllowed)
+        {
+            _logger.LogDebug(
+                "Rate limit decision allowed. RouteId: {RouteId}, PolicyName: {PolicyName}, ClientSource: {ClientSource}, StorageMode: {StorageMode}, Remaining: {Remaining}, Limit: {Limit}",
+                routeId,
+                decision.PolicyName,
+                client.Source,
+                _options.Storage.Mode,
+                decision.Remaining,
+                decision.Limit
+            );
+
+            return;
+        }
+
+        _logger.LogWarning(
+            "Rate limit decision rejected. RouteId: {RouteId}, PolicyName: {PolicyName}, ClientSource: {ClientSource}, StorageMode: {StorageMode}, Remaining: {Remaining}, Limit: {Limit}, RetryAfterSeconds: {RetryAfterSeconds}, RejectionReason: {RejectionReason}",
+            routeId,
+            decision.PolicyName,
+            client.Source,
+            _options.Storage.Mode,
+            decision.Remaining,
+            decision.Limit,
+            decision.RetryAfter is null ? 0 : Math.Ceiling(decision.RetryAfter.Value.TotalSeconds),
+            "InsufficientTokens"
+        );
     }
 }

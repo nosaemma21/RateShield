@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
@@ -114,15 +115,13 @@ public sealed class RateLimitingMiddlewareTests
     {
         var options = new RateShieldOptions();
 
-        options.Routes["sample-api"] = new RoutePolicyOptions
-        {
-            PolicyName = "Default",
-        };
+        options.Routes["sample-api"] = new RoutePolicyOptions { PolicyName = "Default" };
 
         return new RateLimitingMiddleware(
             next: next,
             identityProvider: new FakeClientIdentityProvider(),
             rateLimitEvaluator: evaluator,
+            logger: NullLogger<RateLimitingMiddleware>.Instance,
             options: Options.Create(options)
         );
     }
