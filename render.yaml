@@ -27,3 +27,7 @@ services:
         value: "1"
       - key: RateShield__Policies__Default__RequestCost
         value: "1"
+      - key: ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address
+        sync: false
+      - key: RateShield__Routes__sample-api__PolicyName
+        value: Default
