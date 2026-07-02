@@ -1,0 +1,210 @@
+# Gateway Flow
+
+RateShield is an ASP.NET Core reverse-proxy gateway with a token-bucket rate limiter in front of YARP.
+
+The main request flow is:
+
+```text
+Client
+  -> RateShield.Gateway
+  -> ASP.NET Core routing
+  -> RateShield rate-limiting middleware
+  -> YARP reverse proxy
+  -> Backend service
+```
+
+## YARP Concepts
+
+YARP is the reverse-proxy library RateShield uses to forward allowed requests to backend services.
+
+YARP has three important concepts:
+
+- Route: decides which incoming requests should be proxied.
+- Cluster: a named group of backend destinations.
+- Destination: one concrete backend address inside a cluster.
+
+### Route
+
+A YARP route decides which incoming requests should be handled by the proxy.
+
+Example:
+
+```json
+"sample-api": {
+  "ClusterId": "sample-backend",
+  "Match": {
+    "Path": "/api/{**catch-all}"
+  }
+}
+```
+
+This means requests under `/api` match the `sample-api` route.
+
+Examples:
+
+```text
+/api
+/api/hello
+/api/users/123
+/api/hello?source=gateway
+```
+
+The route ID is important because RateShield uses it to choose the rate-limit policy.
+
+### Cluster
+
+A YARP cluster is a named group of backend destinations.
+
+Example:
+
+```json
+"sample-backend": {
+  "Destinations": {
+    "sample-backend-primary": {
+      "Address": "http://localhost:5255/"
+    }
+  }
+}
+```
+
+The route points to this cluster with:
+
+```json
+"ClusterId": "sample-backend"
+```
+
+### Destination
+
+A destination is one concrete backend address inside a cluster.
+
+For local development:
+
+```text
+Gateway:        http://localhost:5201
+SampleBackend:  http://localhost:5255
+```
+
+So this request:
+
+```text
+http://localhost:5201/api/hello
+```
+
+is forwarded to:
+
+```text
+http://localhost:5255/api/hello
+```
+
+YARP preserves the original path by default.
+
+The YARP destination must point to the backend, not the gateway.
+
+Correct:
+
+```json
+"Address": "http://localhost:5255/"
+```
+
+Incorrect:
+
+```json
+"Address": "http://localhost:5201/"
+```
+
+Pointing YARP to the gateway would create a proxy loop.
+
+## RateShield Policy Mapping
+
+YARP config decides where requests go.
+
+RateShield config decides whether requests are allowed.
+
+Example:
+
+```json
+"RateShield": {
+  "Routes": {
+    "sample-api": {
+      "PolicyName": "Default"
+    }
+  }
+}
+```
+
+This means:
+
+```text
+YARP route sample-api uses RateShield policy Default.
+```
+
+This separation is intentional:
+
+- YARP decides where requests go.
+- RateShield decides whether requests are allowed before forwarding.
+
+## Middleware Order
+
+The gateway pipeline is ordered like this:
+
+```csharp
+app.UseRouting();
+
+app.UseRateShieldRateLimiting();
+
+app.MapRateShieldEndpoints();
+```
+
+`UseRouting()` must run before the rate-limiting middleware because the middleware needs endpoint metadata to find the matched YARP route ID.
+
+The rate-limiting middleware only limits proxied YARP traffic.
+
+These endpoints bypass rate limiting:
+
+```text
+/
+/health/live
+/health/ready
+```
+
+They are gateway endpoints, not backend proxy routes. This keeps platform health checks reliable and prevents gateway diagnostics from consuming client quota.
+
+## Rate-Limiting Flow
+
+For a proxied request:
+
+```text
+1. Resolve YARP route ID.
+2. Resolve client identity.
+3. Resolve the RateShield policy for the route.
+4. Build a token bucket key from client ID, route ID, and policy name.
+5. Get or create the bucket.
+6. Refill earned tokens.
+7. Consume tokens if available.
+8. Allow the request to YARP or reject with HTTP 429.
+```
+
+Allowed responses include:
+
+```text
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+```
+
+Rejected responses include:
+
+```text
+HTTP 429 Too Many Requests
+Retry-After
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+```
+
+## Current Limitations
+
+- `X-Forwarded-For` is not trusted yet.
+- Redis distributed storage is not implemented yet.
+- Observability metrics are not fully implemented yet.
+- YARP transforms are not configured yet because local forwarding currently preserves the path as needed.
