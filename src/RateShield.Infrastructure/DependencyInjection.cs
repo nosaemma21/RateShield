@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton<ITokenBucketStore, InMemoryTokenBucketStore>(); //redis later
         services.AddSingleton<TokenBucketLockProvider>();
         services.AddSingleton<IRateLimitEvaluator, RateLimitEvaluator>();
+        services.AddHostedService<TokenBucketCleanupWorker>();
 
         return services;
     }
