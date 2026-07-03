@@ -18,8 +18,9 @@ var app = builder.Build();
 
 // endpoints in their file
 
-app.UseRouting(); //--------------\\
-app.UseRateShieldRateLimiting(); //------------route before mw so "context.GetEndpoint()" is not null
+app.UseRouting(); //so "context.GetEndpoint()" is not null
+app.UseRateShieldCorrelationId();
+app.UseRateShieldRateLimiting();
 
 app.MapRateShieldEndpoints();
 

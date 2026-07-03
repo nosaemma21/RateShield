@@ -8,4 +8,9 @@ public static class ApplicationBuilderExtensions
     {
         return app.UseMiddleware<RateLimitingMiddleware>();
     }
+
+    public static IApplicationBuilder UseRateShieldCorrelationId(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<CorrelationIdMiddleware>();
+    }
 }
