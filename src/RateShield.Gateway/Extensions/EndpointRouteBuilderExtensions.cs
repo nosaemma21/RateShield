@@ -17,6 +17,9 @@ public static class EndpointRouteBuilderExtensions
         //if process is ready to serve traffic
         endpoints.MapHealthChecks("/health/ready");
 
+        //FOR PROMETHEUS (BETA)🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+        endpoints.MapPrometheusScrapingEndpoint();
+
         // for yarp
         endpoints.MapReverseProxy();
 

@@ -88,6 +88,17 @@ public static class ServiceCollectionExtensions
                 {
                     metrics.AddConsoleExporter();
                 }
+                if (
+                    string.Equals(
+                        observabilityOptions.MetricsExporter,
+                        "Prometheus",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    //🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨BETA🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+                    metrics.AddPrometheusExporter();
+                }
             });
 
         return services;
