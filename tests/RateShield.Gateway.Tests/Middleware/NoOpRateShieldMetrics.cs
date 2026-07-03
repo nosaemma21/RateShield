@@ -11,7 +11,8 @@ public sealed class NoOpRateShieldMetrics : IRateShieldMetrics
         ClientIdentity client,
         RateLimitDecision decision,
         string storageMode
-    ) { }
+    )
+    { }
 
     public void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode) { }
 
