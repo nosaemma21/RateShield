@@ -49,9 +49,36 @@ public sealed class RateLimitingMiddleware
 
         var client = _identityProvider.ResolveClient(context);
 
-        var decision = _rateLimitEvaluator.Evaluate(
-            new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
-        );
+        // var decision = _rateLimitEvaluator.Evaluate(
+        //     new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
+        // );
+
+        RateLimitDecision decision;
+
+        try
+        {
+            decision = _rateLimitEvaluator.Evaluate(
+                new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
+            );
+        }
+        catch (Exception exception)
+        {
+            _metrics.RecordError(
+                errorType: "LimiterError",
+                routeId: routeId,
+                storageMode: _options.Storage.Mode
+            );
+
+            _logger.LogError(
+                exception,
+                "Rate limit evaluation failed. RouteId: {RouteId}, ClientSource: {ClientSource}, StorageMode: {StorageMode}",
+                routeId,
+                client.Source,
+                _options.Storage.Mode
+            );
+
+            throw;
+        }
 
         LogRateLimitDecison(routeId, client, decision);
         _metrics.RecordDecision(

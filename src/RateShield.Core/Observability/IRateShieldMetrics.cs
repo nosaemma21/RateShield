@@ -13,4 +13,6 @@ public interface IRateShieldMetrics
     );
 
     void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode);
+
+    void RecordError(string errorType, string routeId, string storageMode);
 }

@@ -14,4 +14,6 @@ public sealed class NoOpRateShieldMetrics : IRateShieldMetrics
     ) { }
 
     public void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode) { }
+
+    public void RecordError(string errorType, string routeId, string storageMode) { }
 }

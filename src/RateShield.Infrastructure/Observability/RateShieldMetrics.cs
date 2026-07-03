@@ -17,6 +17,7 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
     private readonly RateShieldOptions _options;
     private readonly Counter<long> _cleanupRuns;
     private readonly Counter<long> _cleanupRemovedBuckets;
+    private readonly Counter<long> _errors;
 
     public RateShieldMetrics(ITokenBucketStore bucketStore, IOptions<RateShieldOptions> options)
     {
@@ -54,6 +55,12 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
             "rateshield.cleanup.removed_buckets",
             unit: "buckets",
             description: "Number of idle token buckets removed by cleanup."
+        );
+
+        _errors = _meter.CreateCounter<long>(
+            "rateshield.errors",
+            unit: "errors",
+            description: "Number of errors encountered by RateShield."
         );
     }
 
@@ -108,5 +115,18 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
         {
             _cleanupRemovedBuckets.Add(removedBucketCount, tags);
         }
+    }
+
+    public void RecordError(string errorType, string routeId, string storageMode)
+    {
+        // throw new NotImplementedException();
+        var tags = new KeyValuePair<string, object?>[]
+        {
+            new("error.type", errorType),
+            new("route.id", routeId),
+            new("storage.mode", storageMode),
+        };
+
+        _errors.Add(1, tags);
     }
 }
