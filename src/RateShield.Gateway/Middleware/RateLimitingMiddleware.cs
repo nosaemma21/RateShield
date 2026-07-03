@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
+using RateShield.Core.Observability;
 using RateShield.Core.RateLimiting;
 using Yarp.ReverseProxy.Model;
 
@@ -11,6 +12,7 @@ public sealed class RateLimitingMiddleware
 {
     private const string UnknownRouteId = "unknown";
 
+    private readonly IRateShieldMetrics _metrics;
     private readonly RequestDelegate _next;
     private readonly IClientIdentityProvider<HttpContext> _identityProvider;
     private readonly IRateLimitEvaluator _rateLimitEvaluator;
@@ -18,6 +20,7 @@ public sealed class RateLimitingMiddleware
     private readonly ILogger<RateLimitingMiddleware> _logger;
 
     public RateLimitingMiddleware(
+        IRateShieldMetrics metrics,
         RequestDelegate next,
         IClientIdentityProvider<HttpContext> identityProvider,
         IRateLimitEvaluator rateLimitEvaluator,
@@ -30,6 +33,7 @@ public sealed class RateLimitingMiddleware
         _rateLimitEvaluator = rateLimitEvaluator;
         _options = options.Value;
         _logger = logger;
+        _metrics = metrics;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -50,6 +54,12 @@ public sealed class RateLimitingMiddleware
         );
 
         LogRateLimitDecison(routeId, client, decision);
+        _metrics.RecordDecision(
+            routeId: routeId,
+            client: client,
+            decision: decision,
+            storageMode: _options.Storage.Mode
+        );
 
         AddRateLimitHeaders(context, decision);
 

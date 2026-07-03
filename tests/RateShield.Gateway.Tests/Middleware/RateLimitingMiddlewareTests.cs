@@ -117,12 +117,15 @@ public sealed class RateLimitingMiddlewareTests
 
         options.Routes["sample-api"] = new RoutePolicyOptions { PolicyName = "Default" };
 
+        var metrics = new NoOpRateShieldMetrics();
+
         return new RateLimitingMiddleware(
             next: next,
             identityProvider: new FakeClientIdentityProvider(),
             rateLimitEvaluator: evaluator,
             logger: NullLogger<RateLimitingMiddleware>.Instance,
-            options: Options.Create(options)
+            options: Options.Create(options),
+            metrics: new NoOpRateShieldMetrics()
         );
     }
 
