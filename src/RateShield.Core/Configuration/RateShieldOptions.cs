@@ -10,4 +10,5 @@ public sealed class RateShieldOptions
     public RejectionResponseOptions RejectionResponse { get; init; } = new();
     public Dictionary<string, RateLimitPolicyOptins> Policies { get; init; } = new();
     public Dictionary<string, RoutePolicyOptions> Routes { get; init; } = new();
+    public ObservabilityOptions Observability { get; init; } = new();
 }

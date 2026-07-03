@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Metrics;
 using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
 using RateShield.Gateway.Identity;
@@ -51,6 +52,44 @@ public static class ServiceCollectionExtensions
     {
         services.AddRateShieldInfrastructure();
         services.AddSingleton<IClientIdentityProvider<HttpContext>, HttpClientIdentityProvider>();
+        return services;
+    }
+
+    public static IServiceCollection AddRateShieldObservability(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var observabilityOptions =
+            configuration
+                .GetSection($"{RateShieldOptions.SectionName}:Observability")
+                .Get<ObservabilityOptions>()
+            ?? new ObservabilityOptions();
+
+        if (!observabilityOptions.Enabled)
+        {
+            return services;
+        }
+
+        services
+            .AddOpenTelemetry()
+            .WithMetrics(metrics =>
+            {
+                metrics.AddMeter("RateShield");
+                metrics.AddAspNetCoreInstrumentation();
+
+                if (
+                    string.Equals(
+                        observabilityOptions.MetricsExporter,
+                        "Console",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    metrics.AddConsoleExporter();
+                }
+            });
+
         return services;
     }
 }
