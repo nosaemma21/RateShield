@@ -4,7 +4,7 @@ using RateShield.Core.RateLimiting;
 
 namespace RateShield.Gateway.Tests.Middleware;
 
-internal sealed class NoOpRateShieldMetrics : IRateShieldMetrics
+public sealed class NoOpRateShieldMetrics : IRateShieldMetrics
 {
     public void RecordDecision(
         string routeId,
@@ -12,4 +12,6 @@ internal sealed class NoOpRateShieldMetrics : IRateShieldMetrics
         RateLimitDecision decision,
         string storageMode
     ) { }
+
+    public void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode) { }
 }

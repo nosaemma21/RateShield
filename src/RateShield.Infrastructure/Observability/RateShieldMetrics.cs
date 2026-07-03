@@ -12,10 +12,11 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
     private readonly Meter _meter;
     private readonly Counter<long> _allowedRequests;
     private readonly Counter<long> _rejectedRequests;
-    private readonly ObservableGauge<int> _activeBuckets;
+
     private readonly ITokenBucketStore _bucketStore;
     private readonly RateShieldOptions _options;
-    private bool _disposed;
+    private readonly Counter<long> _cleanupRuns;
+    private readonly Counter<long> _cleanupRemovedBuckets;
 
     public RateShieldMetrics(ITokenBucketStore bucketStore, IOptions<RateShieldOptions> options)
     {
@@ -36,11 +37,23 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
             description: "Number of requests rejected by RateShield."
         );
 
-        _activeBuckets = _meter.CreateObservableGauge(
+        _meter.CreateObservableGauge(
             "rateshield.buckets.active",
             ObserveActiveBuckets,
             unit: "buckets",
             description: "Current number of active token buckets."
+        );
+
+        _cleanupRuns = _meter.CreateCounter<long>(
+            "rateshield.cleanup.runs",
+            unit: "runs",
+            description: "Number of token bucket cleanup scans run by RateShield."
+        );
+
+        _cleanupRemovedBuckets = _meter.CreateCounter<long>(
+            "rateshield.cleanup.removed_buckets",
+            unit: "buckets",
+            description: "Number of idle token buckets removed by cleanup."
         );
     }
 
@@ -63,6 +76,7 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
         if (decision.IsAllowed)
         {
             _allowedRequests.Add(1, tags);
+            return;
         }
 
         _rejectedRequests.Add(1, tags);
@@ -77,17 +91,22 @@ public sealed class RateShieldMetrics : IRateShieldMetrics, IDisposable
         );
     }
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
-
     // drop
     public void Dispose()
     {
         _meter.Dispose();
+    }
+
+    public void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode)
+    {
+        // throw new NotImplementedException();
+        var tags = new KeyValuePair<string, object?>[] { new("storage.mode", storageMode) };
+
+        _cleanupRuns.Add(1, tags);
+
+        if (removedBucketCount > 0)
+        {
+            _cleanupRemovedBuckets.Add(removedBucketCount, tags);
+        }
     }
 }

@@ -11,4 +11,6 @@ public interface IRateShieldMetrics
         RateLimitDecision decision,
         string storageMode
     );
+
+    void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode);
 }

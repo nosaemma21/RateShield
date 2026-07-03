@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
+using RateShield.Core.Identity;
+using RateShield.Core.Observability;
 using RateShield.Core.RateLimiting;
 using RateShield.Core.Tests.Time;
 using RateShield.Infrastructure.Cleanup;
@@ -121,7 +123,20 @@ public sealed class TokenBucketCleanupServiceTests
             bucketStore: store,
             clock: clock,
             options: Options.Create(options),
-            logger: NullLogger<TokenBucketCleanupService>.Instance
+            logger: NullLogger<TokenBucketCleanupService>.Instance,
+            metrics: new NoOpRateShieldMetrics()
         );
     }
+}
+
+internal sealed class NoOpRateShieldMetrics : IRateShieldMetrics
+{
+    public void RecordDecision(
+        string routeId,
+        ClientIdentity client,
+        RateLimitDecision decision,
+        string storageMode
+    ) { }
+
+    public void RecordCleanup(int removedBucketCount, int activeBucketCount, string storageMode) { }
 }
