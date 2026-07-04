@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.AspNetCore.Routing.Tree;
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
@@ -9,6 +11,7 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
     private const string ApiKeySource = "ApiKeyHeader";
     private const string ClientIdSource = "ClientIdHeader";
     private const string RemoteIpSource = "RemoteIp";
+    private const string ForwardedIpSource = "ForwardedIp";
 
     private readonly RateShieldOptions _options;
 
@@ -28,6 +31,11 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
         if (TryGetHeaderValue(context, _options.Identity.ClientIdHeaderName, out var clientId))
         {
             return new ClientIdentity(Value: clientId, Source: ClientIdSource);
+        }
+
+        if (TryGetTrustedForwardedIp(context, out var forwardedIp))
+        {
+            return new ClientIdentity(Value: forwardedIp, Source: ForwardedIpSource);
         }
 
         var remoteIp = context.Connection.RemoteIpAddress?.ToString();
@@ -64,5 +72,63 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
 
         value = firstValue.Trim();
         return true;
+    }
+
+    //helper for forwarded ip trust
+    private bool TryGetTrustedForwardedIp(HttpContext context, out string forwardedIp)
+    {
+        forwardedIp = string.Empty;
+
+        if (!_options.Identity.TrustForwardedHeaders)
+        {
+            return false;
+        }
+
+        var remoteIp = context.Connection.RemoteIpAddress;
+
+        if (remoteIp is null || !IsTrustedProxy(remoteIp))
+        {
+            return false;
+        }
+
+        if (
+            !TryGetHeaderValue(
+                context,
+                _options.Identity.ForwardedForHeaderName,
+                out var forwardedFor
+            )
+        )
+        {
+            return false;
+        }
+
+        var firstForwardedIp = forwardedFor.Split(',')[0].Trim();
+
+        if (!IPAddress.TryParse(firstForwardedIp, out _))
+        {
+            return false;
+        }
+
+        forwardedIp = firstForwardedIp;
+        return true;
+    }
+
+    //helper
+    //if false,RateShield ignores X-forwarded-for
+    private bool IsTrustedProxy(IPAddress remoteIp)
+    {
+        foreach (var trustedProxy in _options.Identity.TrustedProxyIpAddresses)
+        {
+            if (!IPAddress.TryParse(trustedProxy, out var trustedProxyIp))
+            {
+                continue;
+            }
+            if (remoteIp.Equals(trustedProxyIp))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

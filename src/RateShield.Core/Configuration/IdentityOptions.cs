@@ -7,4 +7,5 @@ public sealed class IdentityOptions
     public string ClientIdHeaderName { get; init; } = "X-Client-Id";
     public bool TrustForwardedHeaders { get; init; }
     public string ForwardedForHeaderName { get; set; } = "X-Forwarded-For";
+    public string[] TrustedProxyIpAddresses { get; init; } = [];
 }

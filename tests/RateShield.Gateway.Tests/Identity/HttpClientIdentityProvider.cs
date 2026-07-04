@@ -135,6 +135,123 @@ public sealed class HttpClientIdentityProviderTests
         Assert.Equal("ApiKeyHeader", identity.Source);
     }
 
+    [Fact]
+    public void ResolveClient_WhenForwardedHeadersAreNotTrusted_IgnoredForwardedFor()
+    {
+        //arrange
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.10");
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.10";
+
+        var provider = CreateProvider(
+            new IdentityOptions
+            {
+                TrustForwardedHeaders = true,
+                TrustedProxyIpAddresses = ["10.0.0.10"],
+            }
+        );
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("203.0.113.10", identity.Value);
+        Assert.Equal("ForwardedIp", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenRemoteIpIsTrustedProxy_UsesForwardedFor()
+    {
+        //arrange
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.10");
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.10";
+
+        var provider = CreateProvider(
+            new IdentityOptions
+            {
+                TrustForwardedHeaders = true,
+                TrustedProxyIpAddresses = ["10.0.0.10"],
+            }
+        );
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("203.0.113.10", identity.Value);
+        Assert.Equal("ForwardedIp", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenForwardedForIsInvalid_IgnoresForwardedFor()
+    {
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.10");
+        context.Request.Headers["X-Forwarded-For"] = "not-an-ip-address";
+
+        var provider = CreateProvider(
+            new IdentityOptions
+            {
+                TrustForwardedHeaders = true,
+                TrustedProxyIpAddresses = ["10.0.0.10"],
+            }
+        );
+
+        var identity = provider.ResolveClient(context);
+
+        Assert.Equal("10.0.0.10", identity.Value);
+        Assert.Equal("RemoteIp", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenRemoteIpIsNotTrustedProxy_IgnoresForwardedFor()
+    {
+        //arrange
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.10");
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.10";
+
+        var provider = CreateProvider(
+            new IdentityOptions
+            {
+                TrustForwardedHeaders = true,
+                TrustedProxyIpAddresses = ["10.0.0.99"],
+            }
+        );
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("10.0.0.10", identity.Value);
+        Assert.Equal("RemoteIp", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenForwardedForContainsMultipleIps_UsesFirstIp()
+    {
+        //arrange
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.10");
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.10, 198.51.100.20";
+
+        var provider = CreateProvider(
+            new IdentityOptions
+            {
+                TrustForwardedHeaders = true,
+                TrustedProxyIpAddresses = ["10.0.0.10"],
+            }
+        );
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("203.0.113.10", identity.Value);
+        Assert.Equal("ForwardedIp", identity.Source);
+    }
+
     //helpers------------------**-----------------//
     private static DefaultHttpContext CreateHttpContext()
     {
