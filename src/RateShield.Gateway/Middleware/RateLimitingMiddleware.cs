@@ -153,7 +153,7 @@ public sealed class RateLimitingMiddleware
         {
             Error = _options.RejectionResponse.ErrorCode,
             Message = _options.RejectionResponse.Message,
-            Policy = decision.PolicyName,
+            // Policy = decision.PolicyName,
             RetryAfterSeconds = decision.RetryAfter is null
                 ? 0
                 : (int)Math.Ceiling(decision.RetryAfter.Value.TotalSeconds),
