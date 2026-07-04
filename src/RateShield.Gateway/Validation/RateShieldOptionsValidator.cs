@@ -15,6 +15,7 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
         ValidateRoutes(options, failures);
         ValidateCleanup(options, failures);
         ValidateRejectionResponse(options, failures);
+        ValidateIdentity(options, failures);
 
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)
@@ -112,6 +113,42 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
         if (string.IsNullOrWhiteSpace(options.RejectionResponse.Message))
         {
             failures.Add("Rejection response message is required");
+        }
+    }
+
+    //added to validate identity opts
+    private static void ValidateIdentity(RateShieldOptions options, List<string> failures)
+    {
+        if (string.IsNullOrWhiteSpace(options.Identity.Strategy))
+        {
+            failures.Add("RateShield:Identity:Strategy is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Identity.ApiKeyHeaderName))
+        {
+            failures.Add("RateShield:Identity:ApiKeyHeaderName is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Identity.ClientIdHeaderName))
+        {
+            failures.Add("RateShield:Identity:ClientIdHeaderName is required.");
+        }
+
+        if (options.Identity.TrustForwardedHeaders)
+        {
+            if (string.IsNullOrWhiteSpace(options.Identity.ForwardedForHeaderName))
+            {
+                failures.Add(
+                    "RateShield:Identity:ForwardedForHeaderName is required when forwarded headers are trusted."
+                );
+            }
+
+            if (options.Identity.TrustedProxyIpAddresses.Length == 0)
+            {
+                failures.Add(
+                    "RateShield:Identity:TrustedProxyIpAddresses must contain at least one IP address when forwarded headers are trusted."
+                );
+            }
         }
     }
 }
