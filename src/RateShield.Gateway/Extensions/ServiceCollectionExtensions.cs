@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
@@ -47,11 +47,13 @@ public static class ServiceCollectionExtensions
 
     //added the services from the infra.
     public static IServiceCollection AddRateShieldApplicationServices(
-        this IServiceCollection services
+        this IServiceCollection services,
+        IConfiguration configuration
     )
     {
-        services.AddRateShieldInfrastructure();
+        services.AddRateShieldInfrastructure(configuration);
         services.AddSingleton<IClientIdentityProvider<HttpContext>, HttpClientIdentityProvider>();
+
         return services;
     }
 
@@ -96,7 +98,7 @@ public static class ServiceCollectionExtensions
                     )
                 )
                 {
-                    //🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨BETA🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+                    //ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨BETAðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨
                     metrics.AddPrometheusExporter();
                 }
             });
@@ -104,3 +106,5 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
+
+
