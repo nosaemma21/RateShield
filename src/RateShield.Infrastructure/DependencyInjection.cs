@@ -7,6 +7,7 @@ using RateShield.Core.Time;
 using RateShield.Infrastructure.Cleanup;
 using RateShield.Infrastructure.Observability;
 using RateShield.Infrastructure.RateLimiting;
+using RateShield.Infrastructure.RateLimiting.Redis;
 using RateShield.Infrastructure.Time;
 using StackExchange.Redis;
 
@@ -34,13 +35,15 @@ public static class DependencyInjection
 
         if (string.Equals(storageMode, "Redis", StringComparison.OrdinalIgnoreCase))
         {
-            var connectionString = configuration[$"{RateShieldOptions.SectionName}:Redis:ConnectionString"];
+            var connectionString = configuration[
+                $"{RateShieldOptions.SectionName}:Redis:ConnectionString"
+            ];
 
             services.AddSingleton<IConnectionMultiplexer>(_ =>
                 ConnectionMultiplexer.Connect(connectionString!)
             );
+            services.AddSingleton<RedisTokenBucketScriptExecutor>();
         }
         return services;
     }
 }
-
