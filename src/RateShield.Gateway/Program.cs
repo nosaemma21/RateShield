@@ -7,7 +7,7 @@ builder
     .Services.AddRateShieldOptions(builder.Configuration)
     .AddRateShieldApplicationServices(builder.Configuration)
     .AddRateShieldReverseProxy(builder.Configuration)
-    .AddRateShieldHealthChecks()
+    .AddRateShieldHealthChecks(builder.Configuration)
     .AddRateShieldObservability(builder.Configuration);
 
 var app = builder.Build();

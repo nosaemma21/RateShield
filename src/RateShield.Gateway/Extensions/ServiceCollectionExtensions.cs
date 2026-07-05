@@ -38,10 +38,31 @@ public static class ServiceCollectionExtensions
     }
 
     //extension to add health checks
-    public static IServiceCollection AddRateShieldHealthChecks(this IServiceCollection services)
+    public static IServiceCollection AddRateShieldHealthChecks(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         //basic
-        services.AddHealthChecks();
+        // services.AddHealthChecks();
+        // return services;
+        var healthChecks = services.AddHealthChecks();
+
+        var storageMode = configuration[$"{RateShieldOptions.SectionName}:Storage:Mode"];
+
+        if (string.Equals(storageMode, "Redis", StringComparison.OrdinalIgnoreCase))
+        {
+            var connectionString = configuration[
+                $"{RateShieldOptions.SectionName}:Redis:ConnectionString"
+            ];
+
+            healthChecks.AddRedis(
+                redisConnectionString: connectionString!,
+                name: "redis",
+                tags: ["ready"]
+            );
+        }
+
         return services;
     }
 
@@ -98,7 +119,7 @@ public static class ServiceCollectionExtensions
                     )
                 )
                 {
-                    //ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨BETAðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨ðŸš¨
+                    //🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
                     metrics.AddPrometheusExporter();
                 }
             });
@@ -106,5 +127,3 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
-
-
