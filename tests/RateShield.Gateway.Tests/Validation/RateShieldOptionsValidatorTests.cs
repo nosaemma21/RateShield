@@ -147,6 +147,29 @@ public sealed class RateShieldOptionsValidatorTests
         );
     }
 
+    [Fact]
+    public void Validate_WhenStorageModeIsRedisWithoutConnectionString_ReturnsFailure()
+    {
+        //arrange
+        var options = CreateValidOptions(
+            storage: new StorageOptions { Mode = "Redis", FailureBehavior = "FailClosed" },
+            redis: new RedisOptions { ConnectionString = "" }
+        );
+
+        //act
+        var result = Validate(options);
+
+        //assert
+        Assert.True(result.Failed);
+        Assert.Contains(
+            result.Failures,
+            failure =>
+                failure.Contains(
+                    "RateShield:Redis:ConnectionString is required when RateShield:Storage:Mode is Redis."
+                )
+        );
+    }
+
     //helper fn
     private static ValidateOptionsResult Validate(RateShieldOptions options)
     {
@@ -156,22 +179,16 @@ public sealed class RateShieldOptionsValidatorTests
     }
 
     //helper fn
-    private static RateShieldOptions CreateValidOptions(IdentityOptions? identity = null)
+    private static RateShieldOptions CreateValidOptions(
+        IdentityOptions? identity = null,
+        StorageOptions? storage = null,
+        RedisOptions? redis = null
+    )
     {
         return new RateShieldOptions
         {
-            Storage = new StorageOptions { Mode = "InMemory", FailureBehavior = "FailClosed" },
-            Identity =
-                identity
-                ?? new IdentityOptions
-                {
-                    Strategy = "HeaderThenIp",
-                    ApiKeyHeaderName = "X-Api-Key",
-                    ClientIdHeaderName = "X-Client-Id",
-                    TrustForwardedHeaders = false,
-                    ForwardedForHeaderName = "X-Forwarded-For",
-                    TrustedProxyIpAddresses = [],
-                },
+            Storage =
+                storage ?? new StorageOptions { Mode = "InMemory", FailureBehavior = "FailClosed" },
             CleanUp = new CleanUpOptions
             {
                 IntervalSeconds = 60,
@@ -198,6 +215,18 @@ public sealed class RateShieldOptionsValidatorTests
             {
                 ["sample-api"] = new RoutePolicyOptions { PolicyName = "Default" },
             },
+            Redis = redis ?? new RedisOptions(),
+            Identity =
+                identity
+                ?? new IdentityOptions
+                {
+                    Strategy = "HeaderThenIp",
+                    ApiKeyHeaderName = "X-Api-Key",
+                    ClientIdHeaderName = "X-Client-Id",
+                    TrustForwardedHeaders = false,
+                    ForwardedForHeaderName = "X-Forwarded-For",
+                    TrustedProxyIpAddresses = [],
+                },
         };
     }
 }

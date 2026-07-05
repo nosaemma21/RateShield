@@ -16,6 +16,7 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
         ValidateCleanup(options, failures);
         ValidateRejectionResponse(options, failures);
         ValidateIdentity(options, failures);
+        ValidateRedis(options, failures);
 
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)
@@ -150,5 +151,16 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
                 );
             }
         }
+    }
+
+    private static void ValidateRedis(RateShieldOptions options, List<string> failures)
+    {
+        if (!string.Equals(options.Storage.Mode, "Redis", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+        failures.Add(
+            "RateShield:Redis:ConnectionString is required when RateShield:Storage:Mode is Redis."
+        );
     }
 }
