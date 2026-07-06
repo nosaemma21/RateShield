@@ -42,7 +42,10 @@ public static class DependencyInjection
             services.AddSingleton<IConnectionMultiplexer>(_ =>
                 ConnectionMultiplexer.Connect(connectionString!)
             );
-            services.AddSingleton<RedisTokenBucketScriptExecutor>();
+            services.AddSingleton<
+                IRedisTokenBucketScriptExecutor,
+                RedisTokenBucketScriptExecutor
+            >();
             services.AddSingleton<IRedisRateLimitEvaluator, RedisRateLimitEvaluator>();
         }
         return services;
