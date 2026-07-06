@@ -55,7 +55,6 @@ public sealed class RedisRateLimitEvaluatorTests
         Assert.Equal(now.AddSeconds(1), decision.ResetAt);
     }
 
-    //helper
     private static RedisRateLimitEvaluator CreateEvaluator(
         string failureBehavior,
         DateTimeOffset now
@@ -71,7 +70,6 @@ public sealed class RedisRateLimitEvaluatorTests
         );
     }
 
-    //helper
     private static RateLimitEvaluationRequest CreateRequest()
     {
         return new RateLimitEvaluationRequest(
@@ -80,7 +78,6 @@ public sealed class RedisRateLimitEvaluatorTests
         );
     }
 
-    //helper
     private static RateShieldOptions CreateOptions(string failureBehavior)
     {
         return new RateShieldOptions
