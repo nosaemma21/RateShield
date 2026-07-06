@@ -170,6 +170,62 @@ public sealed class RateShieldOptionsValidatorTests
         );
     }
 
+    [Fact]
+    public void Validate_WhenRedisConnectTimeoutIsInvalid_ReturnsFailure()
+    {
+        // arrange
+        var options = CreateValidOptions(
+            storage: new StorageOptions { Mode = "Redis", FailureBehavior = "FailClosed" },
+            redis: new RedisOptions
+            {
+                ConnectionString = "localhost:6379",
+                ConnectTimeoutMilliseconds = 0,
+                CommandTimeoutMilliseconds = 1000,
+            }
+        );
+
+        // act
+        var result = Validate(options);
+
+        // assert
+        Assert.True(result.Failed);
+        Assert.Contains(
+            result.Failures,
+            failure =>
+                failure.Contains(
+                    "RateShield:Redis:ConnectTimeoutMilliseconds must be greater than 0."
+                )
+        );
+    }
+
+    [Fact]
+    public void Validate_WhenRedisCommandTimeoutIsInvalid_ReturnsFailure()
+    {
+        // arrange
+        var options = CreateValidOptions(
+            storage: new StorageOptions { Mode = "Redis", FailureBehavior = "FailClosed" },
+            redis: new RedisOptions
+            {
+                ConnectionString = "localhost:6379",
+                ConnectTimeoutMilliseconds = 5000,
+                CommandTimeoutMilliseconds = 0,
+            }
+        );
+
+        // act
+        var result = Validate(options);
+
+        // assert
+        Assert.True(result.Failed);
+        Assert.Contains(
+            result.Failures,
+            failure =>
+                failure.Contains(
+                    "RateShield:Redis:CommandTimeoutMilliseconds must be greater than 0."
+                )
+        );
+    }
+
     //helper fn
     private static ValidateOptionsResult Validate(RateShieldOptions options)
     {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
 using RateShield.Core.Observability;
 using RateShield.Core.RateLimiting;
@@ -33,6 +34,10 @@ public static class DependencyInjection
 
         var storageMode = configuration[$"{RateShieldOptions.SectionName}:Storage:Mode"];
 
+        var options =
+            configuration.GetSection(RateShieldOptions.SectionName).Get<RateShieldOptions>()
+            ?? new RateShieldOptions();
+
         if (string.Equals(storageMode, "Redis", StringComparison.OrdinalIgnoreCase))
         {
             var connectionString = configuration[
@@ -40,8 +45,17 @@ public static class DependencyInjection
             ];
 
             services.AddSingleton<IConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(connectionString!)
-            );
+            {
+                var redisConfiguration = ConfigurationOptions.Parse(connectionString!);
+
+                redisConfiguration.ConnectTimeout = options.Redis.ConnectTimeoutMilliseconds;
+
+                redisConfiguration.AsyncTimeout = options.Redis.CommandTimeoutMilliseconds;
+
+                redisConfiguration.SyncTimeout = options.Redis.CommandTimeoutMilliseconds;
+
+                return ConnectionMultiplexer.Connect(connectionString!);
+            });
             services.AddSingleton<
                 IRedisTokenBucketScriptExecutor,
                 RedisTokenBucketScriptExecutor
