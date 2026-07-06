@@ -213,6 +213,35 @@ If rate limits do not appear shared across gateway instances, check:
 - Route IDs and policy names match across deployments.
 - Client identity extraction is configured consistently across instances.
 
+## Managed Redis Setup
+
+For production, RateShield should use a managed Redis-compatible service instead of a Redis container running inside the gateway service.
+
+For Render, use Render Key Value.
+
+Recommended setup:
+
+- Create a Render Key Value instance in the same region as the RateShield gateway.
+- Use the internal connection string when RateShield and Redis are in the same Render private network.
+- Store the Redis connection string as a Render environment variable or secret.
+- Map the connection string to `RateShield__Redis__ConnectionString`.
+- Keep `RateShield__Storage__Mode=Redis` for distributed mode.
+- Keep `RateShield__Storage__FailureBehavior=FailClosed` for protected production APIs.
+
+Example Render environment variables:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=<render-key-value-internal-connection-string>
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
+```
+
+Use the same region for the gateway and Redis to reduce latency.
+
+Do not commit Redis credentials to `appsettings.json`, `.env`, Docker files, or documentation.
+
 ## Production Redis Sizing Notes
 
 Redis memory usage depends on the number of active client-route-policy buckets.
