@@ -84,7 +84,7 @@ Retry-After
 
 ## Docker Compose Run
 
-The local Docker Compose setup runs both the gateway and sample backend:
+The local Docker Compose setup runs the gateway, sample backend, and Redis:
 
 ```powershell
 docker compose up --build
@@ -97,10 +97,29 @@ curl -i http://localhost:8080/health/ready
 curl -i "http://localhost:8080/api/hello?source=compose"
 ```
 
+Compose runs RateShield in Redis mode by default:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Redis__ConnectionString=redis:6379
+```
+
 Inside Docker, the gateway forwards to the sample backend using the Compose service name:
 
 ```text
 http://sample-backend:8080/
+```
+
+Inside Docker, the gateway connects to Redis using the Compose service name:
+
+```text
+redis:6379
+```
+
+The Redis port is also exposed to the host for local inspection:
+
+```text
+localhost:6379
 ```
 
 Do not use `localhost` for container-to-container forwarding. Inside a container, `localhost` means that same container.
@@ -111,6 +130,7 @@ Do not use `localhost` for container-to-container forwarding. Inside a container
 5011 -> local gateway
 5255 -> local sample backend
 8080 -> Docker Compose gateway
+6379 -> Docker Compose Redis
 ```
 
 ## Notes

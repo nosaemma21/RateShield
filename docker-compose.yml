@@ -9,8 +9,14 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
       ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address: http://sample-backend:8080/
+      RateShield__Storage__Mode: Redis
+      RateShield__Storage__FailureBehavior: FailClosed
+      RateShield__Redis__ConnectionString: redis:6379
+      RateShield__Redis__ConnectTimeoutMilliseconds: 5000
+      RateShield__Redis__CommandTimeoutMilliseconds: 1000
     depends_on:
       - sample-backend
+      - redis
   
   sample-backend:
     build:
@@ -19,3 +25,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
+
+  redis:
+    image: redis:7-alpine
+    ports:
+     - "6379:6379"
