@@ -393,3 +393,66 @@ Expected behavior:
 This keeps request processing fast and avoids exhausting Redis connection limits during traffic bursts.
 
 If Redis connectivity becomes unstable, prefer tuning timeout values and provider/network settings before increasing gateway instance count. More gateway instances means more Redis clients and more pressure on the Redis service.
+
+## Redis Timeout Values
+
+RateShield exposes Redis timeout settings through configuration:
+
+```text
+RateShield:Redis:ConnectTimeoutMilliseconds
+RateShield:Redis:CommandTimeoutMilliseconds
+```
+
+`ConnectTimeoutMilliseconds` controls how long the gateway waits while establishing the Redis connection.
+
+`CommandTimeoutMilliseconds` controls how long Redis commands, including the token-bucket Lua script, can run before timing out.
+
+Recommended starting values:
+
+```text
+ConnectTimeoutMilliseconds=5000
+CommandTimeoutMilliseconds=1000
+```
+
+Production tuning guidance:
+
+- Keep command timeouts short enough that Redis latency does not become gateway latency.
+- Avoid extremely low command timeouts that cause false failures during normal provider latency.
+- Increase timeouts only after checking Redis latency, CPU, memory, and network conditions.
+- Revisit timeout values after moving Redis regions, providers, or plans.
+- Test timeout behavior with `FailClosed` and `FailOpen` before production rollout.
+
+Timeouts should be treated as part of the rate-limiter safety posture. A slow Redis dependency should fail predictably instead of making every API request wait too long.
+
+## Redis Retry Behavior
+
+RateShield should not retry token-bucket updates inside the request path by default.
+
+The Redis Lua script is atomic, but retrying a failed or timed-out limiter operation can create uncertainty about whether the first attempt changed Redis state. A retry may also add latency to a request that is already on a failure path.
+
+Recommended retry posture:
+
+- Do not add automatic per-request Redis retries for limiter evaluation.
+- Let Redis failures flow into `RateShield:Storage:FailureBehavior`.
+- Use `FailClosed` for protected production APIs.
+- Use provider-level reliability features such as managed failover where available.
+- Monitor Redis timeout and connection errors instead of hiding them with repeated retries.
+
+If retries are added later, they must be carefully bounded and tested for duplicate token consumption, latency impact, and behavior during Redis failover.
+
+## Redis TLS Requirements
+
+Use TLS for Redis connections whenever the Redis provider supports or requires it, especially outside private networks.
+
+Render or another managed provider may provide different connection strings for internal/private traffic and external/public traffic. Prefer the private/internal connection string when the gateway and Redis are deployed in the same provider network.
+
+Production TLS guidance:
+
+- Use provider-recommended TLS connection strings.
+- Keep Redis traffic on private networking where possible.
+- Do not disable certificate validation in production.
+- Store Redis credentials in platform secrets or environment variables.
+- Avoid logging Redis connection strings because they may contain passwords.
+- Verify TLS requirements before switching between local, staging, and production Redis.
+
+Local Redis containers commonly run without TLS. That is acceptable for local development, but production configuration should match the chosen provider security model.
