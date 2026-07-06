@@ -221,3 +221,33 @@ A rough sizing model is:
 
 ```text
 active_buckets = unique_clients * protected_routes_per_client
+```
+
+Each bucket stores a Redis key plus a small hash containing token and timestamp fields. Actual memory usage varies by Redis version, key length, allocator behavior, provider overhead, and whether the provider adds metadata around keys.
+
+Start by estimating:
+
+- peak unique clients during the bucket idle timeout window
+- number of protected route IDs
+- average number of protected routes each client can touch
+- configured `BucketIdleTimeoutSeconds`
+- Redis provider memory limit
+- expected gateway instance count
+
+Example:
+
+```text
+50,000 active clients * 3 protected route buckets = 150,000 active Redis buckets
+```
+
+Production guidance:
+
+- Set `BucketIdleTimeoutSeconds` low enough to expire inactive clients.
+- Avoid unlimited Redis memory growth.
+- Use a `noeviction` policy for strict rate limiting when supported.
+- Monitor Redis memory usage, key count, latency, and command errors.
+- Alert when Redis memory usage exceeds 70-80%.
+- Load test expected peak client cardinality before production.
+- Keep key names compact, but never store raw API keys or tokens.
+- Use larger Redis plans before enabling aggressive gateway autoscaling.
+- Revisit Redis sizing whenever route count, client count, or rate-limit policy count changes.
