@@ -342,3 +342,54 @@ For self-hosted Redis, decide intentionally between:
 - No persistence only for local development or disposable test environments.
 
 RateShield should remain functional after Redis data loss, but rate-limit counters will restart from fresh buckets.
+
+## Redis Memory Policy
+
+Redis memory must be sized and capped intentionally in production.
+
+RateShield creates one active bucket per client, route, and policy combination. Bucket keys expire automatically, but a high number of unique clients can still create significant Redis memory pressure during the configured idle timeout window.
+
+Recommended memory posture:
+
+- Choose a Redis plan with an explicit memory limit.
+- Estimate active buckets before production rollout.
+- Monitor Redis memory usage, key count, and eviction metrics.
+- Alert before memory exhaustion, usually around 70-80% usage.
+- Keep `BucketIdleTimeoutSeconds` low enough to remove inactive clients.
+- Revisit memory sizing after adding new protected routes or policies.
+
+Do not treat Redis memory as unlimited. If the Redis instance runs out of memory, limiter behavior depends on the provider eviction policy and can become unsafe or noisy.
+
+## Redis Eviction Policy
+
+For strict production rate limiting, prefer `noeviction` when the Redis provider supports it.
+
+With `noeviction`, Redis refuses writes when memory is full instead of silently deleting existing buckets. In RateShield, failed Redis writes flow through the configured storage failure behavior. With `FailClosed`, this protects the backend by rejecting requests when the limiter cannot safely update distributed state.
+
+Avoid eviction policies that can remove active rate-limit buckets unexpectedly unless the tradeoff is intentional.
+
+Risky eviction behaviors include:
+
+- deleting active buckets under memory pressure
+- resetting client quotas earlier than expected
+- allowing a client to regain tokens because its bucket was evicted
+- making distributed rate-limit behavior harder to reason about during traffic spikes
+
+If a managed Redis provider does not allow configuring eviction policy, document the provider default and load test memory pressure before production use.
+
+## Redis Connection Pooling Behavior
+
+RateShield uses StackExchange.Redis through `IConnectionMultiplexer`.
+
+`ConnectionMultiplexer` is designed to be shared and reused. RateShield registers it as a singleton so the gateway does not create a new Redis connection per request.
+
+Expected behavior:
+
+- One shared multiplexer per gateway process.
+- Redis commands reuse the shared connection infrastructure.
+- The token-bucket evaluator should not create or dispose Redis connections during request handling.
+- Connection creation happens through dependency injection during service setup.
+
+This keeps request processing fast and avoids exhausting Redis connection limits during traffic bursts.
+
+If Redis connectivity becomes unstable, prefer tuning timeout values and provider/network settings before increasing gateway instance count. More gateway instances means more Redis clients and more pressure on the Redis service.
