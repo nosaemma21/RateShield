@@ -4,19 +4,23 @@ using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
 using RateShield.Core.Observability;
 using RateShield.Core.RateLimiting;
+using RateShield.Infrastructure.RateLimiting.Redis;
 using Yarp.ReverseProxy.Model;
 
 namespace RateShield.Gateway.Middleware;
 
 public sealed class RateLimitingMiddleware
 {
-    private const string UnknownRouteId = "unknown";
+    // private const string UnknownRouteId = "unknown";
 
     private readonly IRateShieldMetrics _metrics;
     private readonly RequestDelegate _next;
     private readonly IClientIdentityProvider<HttpContext> _identityProvider;
     private readonly IRateLimitEvaluator _rateLimitEvaluator;
-    private RateShieldOptions _options;
+
+    //redis evaluator
+    private readonly IRedisRateLimitEvaluator? _redisRateLimitEvaluator = null;
+    private readonly RateShieldOptions _options;
     private readonly ILogger<RateLimitingMiddleware> _logger;
 
     public RateLimitingMiddleware(
@@ -25,7 +29,8 @@ public sealed class RateLimitingMiddleware
         IClientIdentityProvider<HttpContext> identityProvider,
         IRateLimitEvaluator rateLimitEvaluator,
         IOptions<RateShieldOptions> options,
-        ILogger<RateLimitingMiddleware> logger
+        ILogger<RateLimitingMiddleware> logger,
+        IRedisRateLimitEvaluator? redisRateLimitEvaluator = null
     )
     {
         _next = next;
@@ -34,6 +39,7 @@ public sealed class RateLimitingMiddleware
         _options = options.Value;
         _logger = logger;
         _metrics = metrics;
+        _redisRateLimitEvaluator = redisRateLimitEvaluator;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -57,9 +63,17 @@ public sealed class RateLimitingMiddleware
 
         try
         {
-            decision = _rateLimitEvaluator.Evaluate(
-                new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
+            // decision = _rateLimitEvaluator.Evaluate(
+            //     new RateLimitEvaluationRequest(Client: client, RouteId: routeId)
+            // );
+
+            //changed to accomodate redis store
+            var evaluationRequest = new RateLimitEvaluationRequest(
+                Client: client,
+                RouteId: routeId
             );
+
+            decision = await EvaluateRateLimitAsync(evaluationRequest, context.RequestAborted);
         }
         catch (Exception exception)
         {
@@ -195,5 +209,26 @@ public sealed class RateLimitingMiddleware
             decision.RetryAfter is null ? 0 : Math.Ceiling(decision.RetryAfter.Value.TotalSeconds),
             "InsufficientTokens"
         );
+    }
+
+    //helper fn to choose between in memory or redis eval
+    private async Task<RateLimitDecision> EvaluateRateLimitAsync(
+        RateLimitEvaluationRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        if (string.Equals(_options.Storage.Mode, "Redis", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_redisRateLimitEvaluator is null)
+            {
+                throw new InvalidOperationException(
+                    "Redis storage mode is enabled, but the Redis rate limit evaluator is not registered."
+                );
+            }
+
+            return await _redisRateLimitEvaluator.EvaluateAsync(request, cancellationToken);
+        }
+
+        return _rateLimitEvaluator.Evaluate(request);
     }
 }
