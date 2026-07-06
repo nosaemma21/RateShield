@@ -242,6 +242,43 @@ Use the same region for the gateway and Redis to reduce latency.
 
 Do not commit Redis credentials to `appsettings.json`, `.env`, Docker files, or documentation.
 
+## Self-Hosted Redis Container Setup
+
+Self-hosted Redis is useful for local development, demos, and controlled non-production environments. For production, prefer a managed Redis-compatible service unless the team is prepared to operate Redis directly.
+
+A simple local Redis container can be started with:
+
+```powershell
+docker run --name rateshield-redis -p 6379:6379 redis:7-alpine
+```
+
+Local environment variables:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=localhost:6379
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
+```
+
+Self-hosted Redis production responsibilities include:
+
+- persistence configuration
+- memory limits
+- eviction policy
+- authentication
+- TLS or private networking
+- backups
+- monitoring
+- patching
+- restart strategy
+- data recovery planning
+
+Do not run Redis inside the same container as RateShield. Redis should be a separate container, service, or managed dependency.
+
+For local Docker Compose setups, define Redis as a separate service and point RateShield to the Redis service name instead of `localhost`.
+
 ## Production Redis Sizing Notes
 
 Redis memory usage depends on the number of active client-route-policy buckets.
