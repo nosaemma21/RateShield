@@ -212,3 +212,12 @@ If rate limits do not appear shared across gateway instances, check:
 - All instances use the same Redis connection string.
 - Route IDs and policy names match across deployments.
 - Client identity extraction is configured consistently across instances.
+
+## Production Redis Sizing Notes
+
+Redis memory usage depends on the number of active client-route-policy buckets.
+
+A rough sizing model is:
+
+```text
+active_buckets = unique_clients * protected_routes_per_client
