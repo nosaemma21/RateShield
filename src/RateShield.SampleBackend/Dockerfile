@@ -18,6 +18,8 @@ RUN addgroup --system rateshield && adduser --system --ingroup rateshield --home
 
 COPY --from=build --chown=rateshield:rateshield /app/publish .
 
+USER rateshield
+
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080
 
