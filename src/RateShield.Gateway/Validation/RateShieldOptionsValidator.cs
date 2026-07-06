@@ -159,14 +159,19 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
         {
             return;
         }
-        failures.Add(
-            "RateShield:Redis:ConnectionString is required when RateShield:Storage:Mode is Redis."
-        );
+
+        if (string.IsNullOrWhiteSpace(options.Redis.ConnectionString))
+        {
+            failures.Add(
+                "RateShield:Redis:ConnectionString is required when RateShield:Storage:Mode is Redis."
+            );
+        }
 
         if (options.Redis.ConnectTimeoutMilliseconds <= 0)
         {
             failures.Add("RateShield:Redis:ConnectTimeoutMilliseconds must be greater than 0.");
         }
+
         if (options.Redis.CommandTimeoutMilliseconds <= 0)
         {
             failures.Add("RateShield:Redis:CommandTimeoutMilliseconds must be greater than 0.");
