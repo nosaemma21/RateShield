@@ -317,3 +317,28 @@ Production guidance:
 - Keep key names compact, but never store raw API keys or tokens.
 - Use larger Redis plans before enabling aggressive gateway autoscaling.
 - Revisit Redis sizing whenever route count, client count, or rate-limit policy count changes.
+
+## Redis Persistence Expectations
+
+RateShield Redis state is operational rate-limit state, not business data.
+
+If Redis loses data, existing buckets reset and clients may temporarily receive fresh token buckets. This can briefly allow more traffic than intended, but it does not lose application records.
+
+For most RateShield deployments, Redis persistence is recommended but not treated as the source of truth for business-critical data.
+
+Recommended posture:
+
+- Use managed Redis persistence options when available.
+- Prefer persistence for production environments.
+- Do not depend on Redis persistence as the only protection against abuse.
+- Keep `FailClosed` enabled for protected APIs when Redis is unavailable.
+- Treat Redis restore events as limiter reset events.
+- Monitor Redis restarts, failovers, and key count drops.
+
+For self-hosted Redis, decide intentionally between:
+
+- RDB snapshots for simpler periodic persistence.
+- AOF persistence for stronger durability.
+- No persistence only for local development or disposable test environments.
+
+RateShield should remain functional after Redis data loss, but rate-limit counters will restart from fresh buckets.
