@@ -87,4 +87,10 @@ app.MapGet(
     }
 );
 
+//health check
+app.MapGet(
+    "/health/ready",
+    () => Results.Ok(new { status = "ready", service = "RateShield.SampleBackend" })
+);
+
 app.Run();

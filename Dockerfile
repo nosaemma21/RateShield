@@ -1,5 +1,10 @@
 #build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /src
 
 COPY src/RateShield.Core/RateShield.Core.csproj src/RateShield.Core/
@@ -24,5 +29,8 @@ USER rateshield
 
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl --fail http://localhost:8080/health/ready || exit 1
 
 ENTRYPOINT [ "dotnet", "RateShield.Gateway.dll" ]
