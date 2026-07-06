@@ -456,3 +456,79 @@ Production TLS guidance:
 - Verify TLS requirements before switching between local, staging, and production Redis.
 
 Local Redis containers commonly run without TLS. That is acceptable for local development, but production configuration should match the chosen provider security model.
+
+## Redis Authentication Requirements
+
+Production Redis must require authentication unless it is provided through a fully managed private service that handles access control through platform networking and secrets.
+
+RateShield receives Redis credentials through the Redis connection string:
+
+```text
+RateShield:Redis:ConnectionString
+```
+
+Authentication guidance:
+
+- Store Redis credentials in environment variables or hosting-provider secrets.
+- Do not commit Redis passwords to source control.
+- Do not print Redis connection strings in logs.
+- Rotate Redis credentials if they are exposed.
+- Prefer provider-generated credentials over shared manual passwords.
+- Use separate Redis credentials per environment when the provider supports it.
+
+For local development, unauthenticated Redis on `localhost:6379` is acceptable. For shared development, staging, and production environments, require authentication.
+
+## Redis Infrastructure Setup Summary
+
+A production Redis setup for RateShield should be treated as part of the gateway infrastructure, not as an implementation detail hidden inside application code.
+
+Minimum infrastructure decisions:
+
+- Redis provider or deployment model.
+- Redis region and network placement.
+- Redis connection string secret location.
+- TLS requirement.
+- Authentication requirement.
+- Memory limit and scaling plan.
+- Eviction policy.
+- Persistence posture.
+- Monitoring and alerting.
+- Failure behavior in RateShield.
+
+For this project, the selected production target is Render, so the preferred Redis deployment is Render Key Value in the same region as the RateShield gateway service.
+
+Self-hosted Redis should be limited to local development, demos, or environments where the team explicitly owns Redis operations.
+
+## Example Redis Environment Variables
+
+Local Redis mode:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=localhost:6379
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
+```
+
+Render managed Redis mode:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=<render-key-value-internal-connection-string>
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
+```
+
+Development fail-open mode:
+
+```text
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailOpen
+RateShield__Redis__ConnectionString=localhost:6379
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
+```
+
+Use `FailOpen` only for development or controlled emergency recovery. Production protected routes should normally use `FailClosed`.
