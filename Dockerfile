@@ -1,10 +1,6 @@
 #build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /src
 
 COPY src/RateShield.Core/RateShield.Core.csproj src/RateShield.Core/
@@ -19,6 +15,11 @@ RUN dotnet publish src/RateShield.Gateway/RateShield.Gateway.csproj --configurat
 
 #runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 RUN addgroup --system rateshield && adduser --system --ingroup rateshield --home /app rateshield
