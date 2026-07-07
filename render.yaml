@@ -13,6 +13,14 @@ services:
         value: Staging
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:8080
+      - key: Logging__LogLevel__Default
+        value: Information
+      - key: Logging__LogLevel__Microsoft.AspNetCore
+        value: Warning
+      - key: Logging__LogLevel__Yarp
+        value: Information
+      - key: Logging__Console__FormatterName
+        value: json
       - key: RateShield__Storage__Mode
         value: Redis
       - key: RateShield__Storage__FailureBehavior
@@ -52,6 +60,14 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:8080
+      - key: Logging__LogLevel__Default
+        value: Information
+      - key: Logging__LogLevel__Microsoft.AspNetCore
+        value: Warning
+      - key: Logging__LogLevel__Yarp
+        value: Information
+      - key: Logging__Console__FormatterName
+        value: json
       - key: RateShield__Storage__Mode
         value: Redis
       - key: RateShield__Storage__FailureBehavior
