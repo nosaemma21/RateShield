@@ -31,6 +31,9 @@ jobs:
          - name: Restore dependencies
            run: dotnet restore RateShield.sln
 
+         - name: Restore .NET tools
+           run: dotnet tool restore
+
          - name: Check formatting
            run: dotnet format RateShield.sln --verify-no-changes --verbosity minimal
 
@@ -40,8 +43,8 @@ jobs:
          - name: Build solution
            run: dotnet build RateShield.sln --configuration Release --no-restore -warnaserror
          
-         - name: Run tests
-           run: dotnet test RateShield.sln --configuration Release --no-build
+         - name: Run tests with coverage
+           run: dotnet dotnet-coverage collect "dotnet test RateShield.sln --configuration Release --no-build" -f cobertura -o TestResults/coverage.cobertura.xml
 
    docker-build:
       name: Build Docker image
