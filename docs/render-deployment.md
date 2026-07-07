@@ -14,6 +14,21 @@ GitHub push
 -> Render starts the gateway
 ```
 
+## Deployment Steps
+
+1. Push changes to GitHub.
+2. Wait for GitHub Actions to restore, build, test, and publish the Docker image to GHCR.
+3. Open the Render dashboard.
+4. Create or update the Blueprint from `render.yaml`.
+5. For `rateshield-gateway-staging`, provide the staging Render Key Value internal connection string for `RateShield__Redis__ConnectionString`.
+6. Provide the staging backend URL for `ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address`.
+7. Deploy staging and verify `/health/ready`.
+8. Run smoke tests against staging.
+9. For `rateshield-gateway-production`, provide the production Render Key Value internal connection string.
+10. Provide the production backend URL.
+11. Manually deploy production only after staging passes.
+12. Verify production health, proxy forwarding, rate-limit headers, and `429` behavior.
+
 ## Required Render Settings
 
 - Service type: Web Service

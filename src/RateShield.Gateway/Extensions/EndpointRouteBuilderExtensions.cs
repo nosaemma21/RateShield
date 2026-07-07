@@ -1,5 +1,6 @@
 ﻿//extensions for endpoint builder to helps me prevent clutter in Program.cs
 
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using RateShield.Core.Identity;
 
 namespace RateShield.Gateway.Extensions;
@@ -11,10 +12,16 @@ public static class EndpointRouteBuilderExtensions
         endpoints.MapGet("/", () => "RateShield gateway is running");
 
         // if process is alive
-        endpoints.MapHealthChecks("/health/live");
+        endpoints.MapHealthChecks(
+            "/health/live",
+            new HealthCheckOptions { Predicate = _ => false }
+        );
 
         //if process is ready to serve traffic
-        endpoints.MapHealthChecks("/health/ready");
+        endpoints.MapHealthChecks(
+            "/health/ready",
+            new HealthCheckOptions { Predicate = healthCheck => healthCheck.Tags.Contains("ready") }
+        );
 
         //FOR PROMETHEUS (BETA)🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
         endpoints.MapPrometheusScrapingEndpoint();
