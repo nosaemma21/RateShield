@@ -38,7 +38,7 @@ jobs:
            run: dotnet list RateShield.sln package --vulnerable --include-transitive
 
          - name: Build solution
-           run: dotnet build RateShield.sln --configuration Release --no-restore
+           run: dotnet build RateShield.sln --configuration Release --no-restore -warnaserror
          
          - name: Run tests
            run: dotnet test RateShield.sln --configuration Release --no-build
