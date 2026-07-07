@@ -329,3 +329,67 @@ Check logs:
 In-memory mode protects a single gateway instance.
 
 Redis mode should be used when RateShield is horizontally scaled or when all gateway instances must share the same token buckets.
+
+## Render Troubleshooting
+
+### Service Fails To Start
+
+Check Render logs for startup exceptions.
+
+Common causes:
+
+- missing `RateShield__Redis__ConnectionString` when `RateShield__Storage__Mode=Redis`
+- invalid backend destination URL
+- invalid rate-limit policy configuration
+- image tag does not exist in GHCR
+- Render cannot pull the configured image
+
+### Readiness Check Fails
+
+Check:
+
+- `/health/live` first to confirm the app process is running
+- `/health/ready` to confirm required dependencies are reachable
+- Render Key Value is running
+- `RateShield__Redis__ConnectionString` is set on the correct Render service
+- Redis and the gateway are in compatible regions/networks
+- Redis authentication/TLS settings match the connection string
+
+### Proxy Requests Fail
+
+Check:
+
+- `ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address` points to a hosted backend URL
+- the backend URL includes the correct scheme, usually `https://` for public hosted backends
+- the backend service is healthy
+- Render logs do not show YARP destination or forwarding errors
+
+### Rate Limits Do Not Behave As Expected
+
+Check:
+
+- the route ID in YARP matches the key in `RateShield__Routes`
+- the expected policy name exists under `RateShield__Policies`
+- Redis mode is enabled for distributed limits
+- staging and production are not sharing the same Redis instance
+- clients are being identified by the expected identity source
+
+### Image Pull Fails
+
+Check:
+
+- the GHCR image exists
+- the image visibility and permissions allow Render to pull it
+- the image tag in `render.yaml` matches a published tag
+- GitHub Actions successfully published the image
+
+### Logs Are Too Noisy Or Too Quiet
+
+Check the configured logging environment variables:
+
+```text
+Logging__LogLevel__Default
+Logging__LogLevel__Microsoft.AspNetCore
+Logging__LogLevel__Yarp
+Logging__Console__FormatterName
+```
