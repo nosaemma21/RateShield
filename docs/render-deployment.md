@@ -37,6 +37,37 @@ GitHub push
 - Internal port: `8080`
 - Environment: `Production`
 
+## Environments
+
+RateShield uses separate Render services for staging and production.
+
+### Staging
+
+Staging is the pre-production environment used to verify deployments before production.
+
+Staging should:
+
+- deploy automatically from the configured image update path
+- use `ASPNETCORE_ENVIRONMENT=Staging`
+- use its own Render Key Value instance
+- use its own backend destination URL
+- run the full deployment smoke test checklist before promotion to production
+
+### Production
+
+Production is the protected live environment.
+
+Production should:
+
+- require manual deployment
+- use `ASPNETCORE_ENVIRONMENT=Production`
+- use its own Render Key Value instance
+- use its own backend destination URL
+- deploy only after staging passes smoke tests
+- use immutable image tags for release deployments when possible
+
+Do not share Redis/Key Value instances between staging and production.
+
 ## Required Environment Variables
 
 ```text
@@ -214,17 +245,84 @@ If readiness fails after enabling Redis mode, check:
 - the gateway and Redis service are in compatible regions/networks
 - Redis authentication or TLS requirements match the provider connection string
 
-## Smoke Test Checklist
+## Deployment Smoke Test Checklist
 
-After deployment:
+Run these checks after staging deploys and again after production deploys.
+
+Set the target base URL first:
 
 ```text
-GET /health/ready should return 200
-GET /api/hello should proxy to the hosted backend
-Repeated requests should eventually return 429 when policy limits are exceeded
-Rate-limit headers should be present
-Render logs should not show startup configuration errors
+BASE_URL=<render-service-url>
 ```
+
+Check liveness:
+
+```text
+GET /health/live
+```
+
+Expected result:
+
+- HTTP `200`
+- response body indicates healthy process state
+
+Check readiness:
+
+```text
+GET /health/ready
+```
+
+Expected result:
+
+- HTTP `200`
+- Redis-backed deployments should only pass readiness when Redis is reachable
+
+Check proxy forwarding:
+
+```text
+GET /api/hello
+```
+
+Expected result:
+
+- response comes from the configured backend service
+- Render logs do not show YARP destination errors
+
+Check rate-limit headers:
+
+```text
+GET /api/hello
+```
+
+Expected headers:
+
+```text
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+```
+
+Check rejection behavior by sending repeated requests until the route limit is exceeded.
+
+Expected result:
+
+- HTTP `429`
+- `Retry-After` header is present
+- response body uses the configured rejection response
+- Render logs show a rejected rate-limit decision without exposing secrets
+
+Check Redis-backed behavior:
+
+- send requests through the deployed gateway
+- verify rate-limit state persists across requests
+- if multiple gateway instances are enabled, verify limits are shared across instances
+
+Check logs:
+
+- no startup configuration errors
+- no Redis connection failures
+- no YARP destination failures
+- no raw API keys, authorization headers, or secrets in logs
 
 ## Storage Mode Guidance
 
