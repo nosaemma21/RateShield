@@ -27,8 +27,11 @@ GitHub push
 ```text
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://0.0.0.0:8080
-RateShield__Storage__Mode=InMemory
+RateShield__Storage__Mode=Redis
 RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=<render-key-value-internal-connection-string>
+RateShield__Redis__ConnectTimeoutMilliseconds=5000
+RateShield__Redis__CommandTimeoutMilliseconds=1000
 RateShield__Identity__TrustForwardedHeaders=true
 RateShield__Routes__sample-api__PolicyName=Default
 ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address=<hosted backend URL>

@@ -14,7 +14,7 @@ services:
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:8080
       - key: RateShield__Storage__Mode
-        value: InMemory
+        value: Redis
       - key: RateShield__Storage__FailureBehavior
         value: FailClosed
       - key: RateShield__Identity__TrustForwardedHeaders
@@ -31,3 +31,9 @@ services:
         sync: false
       - key: RateShield__Routes__sample-api__PolicyName
         value: Default
+      - key: RateShield__Redis__ConnectionString
+        sync: false
+      - key: RateShield__Redis__ConnectTimeoutMilliseconds
+        value: "5000"
+      - key: RateShield__Redis__CommandTimeoutMilliseconds
+        value: "1000"
