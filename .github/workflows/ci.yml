@@ -44,7 +44,21 @@ jobs:
            run: dotnet build RateShield.sln --configuration Release --no-restore -warnaserror
          
          - name: Run tests with coverage
-           run: dotnet dotnet-coverage collect "dotnet test RateShield.sln --configuration Release --no-build" -f cobertura -o TestResults/coverage.cobertura.xml
+           run: dotnet dotnet-coverage collect "dotnet test RateShield.sln --configuration Release --no-build --results-directory TestResults" -f cobertura -o TestResults/coverage.cobertura.xml
+
+         - name: Upload test results
+           uses: actions/upload-artifact@v7
+           if: always()
+           with:
+            name: test-results
+            path: TestResults
+
+         - name: Upload coverage report
+           uses: "actions/upload-artifact@v7"
+           if: always()
+           with:
+             name: coverage-report
+             path: TestResults/coverage.cobertura.xml
 
    docker-build:
       name: Build Docker image
