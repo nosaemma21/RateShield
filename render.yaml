@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: rateshield-gateway
+    name: rateshield-gateway-staging
     runtime: image
     image:
       url: ghcr.io/nosaemma21/rateshield-gateway:latest
@@ -10,13 +10,19 @@ services:
     healthCheckPath: /health/ready
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
-        value: Production
+        value: Staging
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:8080
       - key: RateShield__Storage__Mode
         value: Redis
       - key: RateShield__Storage__FailureBehavior
         value: FailClosed
+      - key: RateShield__Redis__ConnectionString
+        sync: false
+      - key: RateShield__Redis__ConnectTimeoutMilliseconds
+        value: "5000"
+      - key: RateShield__Redis__CommandTimeoutMilliseconds
+        value: "1000"
       - key: RateShield__Identity__TrustForwardedHeaders
         value: "true"
       - key: RateShield__Policies__Default__Capacity
@@ -27,13 +33,46 @@ services:
         value: "1"
       - key: RateShield__Policies__Default__RequestCost
         value: "1"
-      - key: ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address
-        sync: false
       - key: RateShield__Routes__sample-api__PolicyName
         value: Default
+      - key: ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address
+        sync: false
+
+  - type: web
+    name: rateshield-gateway-production
+    runtime: image
+    image:
+      url: ghcr.io/nosaemma21/rateshield-gateway:latest
+    plan: free
+    region: oregon
+    autoDeploy: false
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - key: RateShield__Storage__Mode
+        value: Redis
+      - key: RateShield__Storage__FailureBehavior
+        value: FailClosed
       - key: RateShield__Redis__ConnectionString
         sync: false
       - key: RateShield__Redis__ConnectTimeoutMilliseconds
         value: "5000"
       - key: RateShield__Redis__CommandTimeoutMilliseconds
         value: "1000"
+      - key: RateShield__Identity__TrustForwardedHeaders
+        value: "true"
+      - key: RateShield__Policies__Default__Capacity
+        value: "100"
+      - key: RateShield__Policies__Default__RefillTokens
+        value: "10"
+      - key: RateShield__Policies__Default__RefillPeriodSeconds
+        value: "1"
+      - key: RateShield__Policies__Default__RequestCost
+        value: "1"
+      - key: RateShield__Routes__sample-api__PolicyName
+        value: Default
+      - key: ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address
+        sync: false
