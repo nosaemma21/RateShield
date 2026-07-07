@@ -2,6 +2,12 @@ using RateShield.Gateway.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//graceful shutdown for bg service
+builder.Host.ConfigureHostOptions(opitons =>
+{
+    opitons.ShutdownTimeout = TimeSpan.FromSeconds(30);
+});
+
 //adding the rateshield options
 builder
     .Services.AddRateShieldOptions(builder.Configuration)

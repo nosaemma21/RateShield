@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
      - "8080:8080"
+    stop_grace_period: 30s
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
@@ -28,6 +29,7 @@ services:
     build:
       context: .
       dockerfile: src/RateShield.SampleBackend/Dockerfile
+    stop_grace_period: 30s
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
