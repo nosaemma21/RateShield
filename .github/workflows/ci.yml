@@ -120,7 +120,7 @@ jobs:
                   docker push $IMAGE_NAME:${{ github.ref_name }}
                 fi
 
-    validate-render-blueprint:
+   validate-render-blueprint:
       name: Validate Render blueprint
       runs-on: ubuntu-latest
 
