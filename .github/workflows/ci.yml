@@ -130,7 +130,7 @@ jobs:
 
           - name: Install Render CLI
             run: |
-                curl -fsSL https://raw.githubusercontent.com/render-oss/render-cli/refs/heads/main/bin/install.sh | sh
+                curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
                 echo "$HOME/.render/bin" >> $GITHUB_PATH
 
           - name: Validate render.yaml
