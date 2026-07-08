@@ -134,5 +134,5 @@ jobs:
                 echo "$HOME/.render/bin" >> $GITHUB_PATH
 
           - name: Validate render.yaml
-            run: render blueprints validate render.yaml
+            run: render blueprints validate render.yaml --workspace ${{ secrets.RENDER_WORKSPACE_ID }}
                 
