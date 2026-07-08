@@ -133,6 +133,9 @@ jobs:
                 curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
                 echo "$HOME/.render/bin" >> $GITHUB_PATH
 
+          - name: Authenticate Render CLI
+            run: render login --api-key ${{ secrets.RENDER_API_KEY }}
+
           - name: Validate render.yaml
             run: render blueprints validate render.yaml --workspace ${{ secrets.RENDER_WORKSPACE_ID }}
                 
