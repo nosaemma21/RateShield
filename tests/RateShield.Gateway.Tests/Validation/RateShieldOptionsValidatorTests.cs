@@ -226,6 +226,49 @@ public sealed class RateShieldOptionsValidatorTests
         );
     }
 
+    [Fact]
+    public void Validate_WhenPolicyValuesAreInvalid_ReturnsFailure()
+    {
+        // arrange
+        var options = CreateValidOptions(
+            policies: new Dictionary<string, RateLimitPolicyOptins>
+            {
+                ["Default"] = new RateLimitPolicyOptins
+                {
+                    Capacity = 0,
+                    RefillTokens = 0,
+                    RefillPeriodSeconds = 0,
+                    RequestCost = 0,
+                },
+            }
+        );
+
+        // act
+        var result = Validate(options);
+
+        // assert
+        Assert.True(result.Failed);
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains("Policy 'Default' capacity must be greater than zero.")
+        );
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains("Policy 'Default' refill tokens must be greater than zero.")
+        );
+        Assert.Contains(
+            result.Failures,
+            failure =>
+                failure.Contains(
+                    "Policy 'Default' refill period seconds must be greater than zero."
+                )
+        );
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains("Policy 'Default' request cost must be greater than zero.")
+        );
+    }
+
     //helper fn
     private static ValidateOptionsResult Validate(RateShieldOptions options)
     {
@@ -238,7 +281,8 @@ public sealed class RateShieldOptionsValidatorTests
     private static RateShieldOptions CreateValidOptions(
         IdentityOptions? identity = null,
         StorageOptions? storage = null,
-        RedisOptions? redis = null
+        RedisOptions? redis = null,
+        Dictionary<string, RateLimitPolicyOptins>? policies = null
     )
     {
         return new RateShieldOptions
@@ -257,16 +301,18 @@ public sealed class RateShieldOptionsValidatorTests
                 ErrorCode = "rate_limit_exceeded",
                 Message = "Too many requests.",
             },
-            Policies = new Dictionary<string, RateLimitPolicyOptins>
-            {
-                ["Default"] = new RateLimitPolicyOptins
+            Policies =
+                policies
+                ?? new Dictionary<string, RateLimitPolicyOptins>
                 {
-                    Capacity = 100,
-                    RefillTokens = 10,
-                    RefillPeriodSeconds = 1,
-                    RequestCost = 1,
+                    ["Default"] = new RateLimitPolicyOptins
+                    {
+                        Capacity = 100,
+                        RefillTokens = 10,
+                        RefillPeriodSeconds = 1,
+                        RequestCost = 1,
+                    },
                 },
-            },
             Routes = new Dictionary<string, RoutePolicyOptions>
             {
                 ["sample-api"] = new RoutePolicyOptions { PolicyName = "Default" },

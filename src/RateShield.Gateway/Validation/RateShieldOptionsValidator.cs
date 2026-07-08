@@ -45,7 +45,19 @@ public sealed class RateShieldOptionsValidator : IValidateOptions<RateShieldOpti
 
             if (policy.Capacity <= 0)
             {
+                failures.Add($"Policy '{policyName}' capacity must be greater than zero.");
+            }
+
+            if (policy.RefillTokens <= 0)
+            {
                 failures.Add($"Policy '{policyName}' refill tokens must be greater than zero.");
+            }
+
+            if (policy.RefillPeriodSeconds <= 0)
+            {
+                failures.Add(
+                    $"Policy '{policyName}' refill period seconds must be greater than zero."
+                );
             }
 
             if (policy.RequestCost <= 0)
