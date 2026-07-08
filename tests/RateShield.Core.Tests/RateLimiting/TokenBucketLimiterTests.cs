@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using RateShield.Core.Identity;
 using RateShield.Core.RateLimiting;
@@ -156,6 +157,44 @@ public sealed class TokenBucketLimiterTests
         // missing 4 tokens, refill +2 per second = wait 2 secs.
         Assert.Equal(TimeSpan.FromSeconds(2), decision.RetryAfter);
         Assert.Equal(now.AddSeconds(2), decision.ResetAt);
+    }
+
+    [Fact]
+    public void Evaluate_WhenRequestCostIsGreaterThanOne_ConsumesRequestCostTokens()
+    {
+        //arrange
+        var now = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+        var policy = new RateLimitPolicy(
+            Name: "Expensive",
+            Capacity: 10,
+            RefillTokens: 2,
+            RefillPeriod: TimeSpan.FromSeconds(1),
+            RequestCost: 4
+        );
+
+        var bucket = new TokenBucketState(
+            availableTokens: 10,
+            lastRefilledAt: now,
+            lastSeenAt: now
+        );
+
+        var request = new RateLimitRequest(
+            Client: Client,
+            RouteId: "sample-api",
+            Policy: policy,
+            RequestedAt: now
+        );
+
+        var limiter = new TokenBucketLimiter();
+
+        //act
+        var decision = limiter.Evaluate(request, bucket);
+
+        //assert
+        Assert.True(decision.IsAllowed);
+        Assert.Equal(6, bucket.AvailableTokens);
+        Assert.Equal(6, decision.Remaining);
+        Assert.Null(decision.RetryAfter);
     }
 
     // Request dummy🧪🧪🧪
