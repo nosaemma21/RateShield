@@ -96,6 +96,20 @@ jobs:
             vuln-type: os,library
             severity: CRITICAL,HIGH
 
+         - name: Validate Docker image starts
+           run: |
+                docker run --rm -d --name rateshield-gateway-ci -p 8080:8080 \
+                  -e ASPNETCORE_ENVIRONMENT=Production \
+                  -e ASPNETCORE_URLS=http://0.0.0.0:8080 \
+                  -e RateShield__Storage__Mode=InMemory \
+                  $IMAGE_NAME:${{github.sha}}
+          
+                  sleep 10
+
+                  curl --fail http://localhost:8080/health/live
+
+                  docker stop rateshield-gateway-ci
+
          - name: push Docker image
            run: |
                 docker push $IMAGE_NAME:${{github.sha}}
