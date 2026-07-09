@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -76,12 +77,26 @@ public sealed class RateLimitingMiddlewareTests
         );
 
         var context = CreateProxyHttpContext();
+        context.Response.Body = new MemoryStream();
 
         await middleware.InvokeAsync(context);
+
+        context.Response.Body.Position = 0;
+        using var document = await JsonDocument.ParseAsync(
+            context.Response.Body,
+            new JsonDocumentOptions(),
+            TestContext.Current.CancellationToken
+        );
+        var body = document.RootElement;
 
         Assert.False(nextCalled);
         Assert.Equal(StatusCodes.Status429TooManyRequests, context.Response.StatusCode);
         Assert.True(context.Response.Headers.ContainsKey(RateLimitHeaders.RetryAfter));
+
+        Assert.Equal("rate_limit_exceeded", body.GetProperty("error").GetString());
+        Assert.Equal("Too many requests.", body.GetProperty("message").GetString());
+        Assert.Equal(10, body.GetProperty("retryAfterSeconds").GetInt32());
+        Assert.StartsWith("application/json", context.Response.ContentType);
     }
 
     [Fact]
