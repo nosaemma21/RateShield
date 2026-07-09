@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <!-- <ImplicitUsings>enable</ImplicitUsings> -->
+    <!-- <Nullable>enable</Nullable> -->
     <OutputType>Exe</OutputType>
     <RootNamespace>RateShield.Core.Tests</RootNamespace>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- <TargetFramework>net8.0</TargetFramework> -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
@@ -25,5 +24,4 @@
     <ProjectReference Include="..\..\src\RateShield.Core\RateShield.Core.csproj" />
     <ProjectReference Include="..\..\src\RateShield.Infrastructure\RateShield.Infrastructure.csproj" />
   </ItemGroup>
-
 </Project>
