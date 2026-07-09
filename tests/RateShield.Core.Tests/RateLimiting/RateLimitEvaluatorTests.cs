@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using RateShield.Core.Configuration;
 using RateShield.Core.Identity;
 using RateShield.Core.RateLimiting;
 using RateShield.Core.Tests.Time;
@@ -149,6 +152,62 @@ public sealed class RateLimitEvaluatorTests
         // assert
         Assert.Equal(10, allowedCount);
         Assert.Equal(40, rejectedCount);
+    }
+
+    [Fact]
+    public void Evaluate_WhenRouteHasSpecificPolicy_AppliesMappedPolicy()
+    {
+        //arrnge
+        var options = new RateShieldOptions
+        {
+            Policies = new Dictionary<string, RateLimitPolicyOptins>
+            {
+                ["Default"] = new()
+                {
+                    Capacity = 1,
+                    RefillTokens = 1,
+                    RefillPeriodSeconds = 60,
+                    RequestCost = 1,
+                },
+                ["Premium"] = new()
+                {
+                    Capacity = 2,
+                    RefillTokens = 1,
+                    RefillPeriodSeconds = 60,
+                    RequestCost = 1,
+                },
+            },
+            Routes = new Dictionary<string, RoutePolicyOptions>
+            {
+                ["premium-api"] = new() { PolicyName = "Premium" },
+            },
+        };
+
+        var resolver = new ConfigurationRateLimitPolicyResolver(
+            Options.Create(options),
+            NullLogger<ConfigurationRateLimitPolicyResolver>.Instance
+        );
+
+        var evaluator = new RateLimitEvaluator(
+            clock: new FakeClock(DateTimeOffset.Parse("2026-01-01T00:00:00Z")),
+            policyResolver: resolver,
+            bucketStore: new InMemoryTokenBucketStore(),
+            limiter: new TokenBucketLimiter(),
+            lockProvider: new TokenBucketLockProvider()
+        );
+
+        var request = new RateLimitEvaluationRequest(Client, "premium-api");
+
+        //act
+        var first = evaluator.Evaluate(request);
+        var second = evaluator.Evaluate(request);
+        var third = evaluator.Evaluate(request);
+
+        //assert
+        Assert.Equal("Premium", first.PolicyName);
+        Assert.True(first.IsAllowed);
+        Assert.True(second.IsAllowed);
+        Assert.False(third.IsAllowed);
     }
 
     private static RateLimitEvaluator CreateEvaluator(DateTimeOffset now, RateLimitPolicy policy)
