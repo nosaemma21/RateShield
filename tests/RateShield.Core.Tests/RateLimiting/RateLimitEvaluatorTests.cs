@@ -210,6 +210,50 @@ public sealed class RateLimitEvaluatorTests
         Assert.False(third.IsAllowed);
     }
 
+    [Fact]
+    public void Evaluate_WhenRouteHasNoMapping_AppliesDefaultPolicy()
+    {
+        //arrange
+        var options = new RateShieldOptions
+        {
+            Policies = new Dictionary<string, RateLimitPolicyOptins>
+            {
+                ["Default"] = new()
+                {
+                    Capacity = 1,
+                    RefillTokens = 1,
+                    RefillPeriodSeconds = 60,
+                    RequestCost = 1,
+                },
+            },
+            Routes = new Dictionary<string, RoutePolicyOptions>(),
+        };
+
+        var resolver = new ConfigurationRateLimitPolicyResolver(
+            Options.Create(options),
+            NullLogger<ConfigurationRateLimitPolicyResolver>.Instance
+        );
+
+        var evaluator = new RateLimitEvaluator(
+            clock: new FakeClock(DateTimeOffset.Parse("2026-01-01T00:00:00Z")),
+            policyResolver: resolver,
+            bucketStore: new InMemoryTokenBucketStore(),
+            limiter: new TokenBucketLimiter(),
+            lockProvider: new TokenBucketLockProvider()
+        );
+
+        var request = new RateLimitEvaluationRequest(Client, "umnapped-api");
+
+        //act
+        var first = evaluator.Evaluate(request);
+        var second = evaluator.Evaluate(request);
+
+        //assert
+        Assert.Equal("Default", first.PolicyName);
+        Assert.True(first.IsAllowed);
+        Assert.False(second.IsAllowed);
+    }
+
     private static RateLimitEvaluator CreateEvaluator(DateTimeOffset now, RateLimitPolicy policy)
     {
         return CreateEvaluator(new FakeClock(now), policy);
