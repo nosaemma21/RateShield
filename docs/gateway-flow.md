@@ -146,6 +146,14 @@ This is the safest default for RateShield because it avoids surprising backend h
 
 Preserving the original `Host` header can be enabled later for specific backend services that require the public gateway host for tenant resolution, absolute URL generation, or strict host-based routing.
 
+## HTTP Version Decision
+
+RateShield does not force a specific upstream HTTP version by default.
+
+YARP is allowed to use the normal HTTP version behavior supported by .NET and the configured backend destination. This keeps local development, Docker Compose, and simple backend services compatible without extra protocol requirements.
+
+The gateway can configure an explicit upstream HTTP version later if a production backend requires it, such as HTTP/2 for gRPC or a service mesh.
+
 ## RateShield Policy Mapping
 
 YARP config decides where requests go.
