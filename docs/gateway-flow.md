@@ -114,6 +114,21 @@ Incorrect:
 
 Pointing YARP to the gateway would create a proxy loop.
 
+## Path Transform Decision
+
+RateShield does not use YARP path transforms by default.
+
+The gateway preserves the incoming request path when forwarding to the backend. This keeps routing predictable and makes RateShield behave like a protective gateway in front of existing services instead of a URL-rewriting layer.
+
+Example:
+
+```text
+Client -> RateShield: /api/orders/123
+RateShield -> Backend: /api/orders/123
+```
+
+Path transforms can be added later for specific routes if a backend expects a different path shape, such as removing an external `/api` prefix before forwarding.
+
 ## RateShield Policy Mapping
 
 YARP config decides where requests go.
