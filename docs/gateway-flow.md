@@ -129,6 +129,23 @@ RateShield -> Backend: /api/orders/123
 
 Path transforms can be added later for specific routes if a backend expects a different path shape, such as removing an external `/api` prefix before forwarding.
 
+## Host Header Decision
+
+RateShield does not preserve the original `Host` header by default.
+
+By default, YARP sends the destination host to the backend. This means the backend receives a `Host` value that matches the configured backend destination instead of the public gateway address.
+
+Example:
+
+```text
+Client -> RateShield: Host: localhost:5011
+RateShield -> Backend: Host: localhost:5255
+```
+
+This is the safest default for RateShield because it avoids surprising backend host validation behavior and keeps local, Docker, and hosted routing predictable.
+
+Preserving the original `Host` header can be enabled later for specific backend services that require the public gateway host for tenant resolution, absolute URL generation, or strict host-based routing.
+
 ## RateShield Policy Mapping
 
 YARP config decides where requests go.
