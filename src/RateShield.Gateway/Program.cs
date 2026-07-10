@@ -18,6 +18,14 @@ builder
 
 var app = builder.Build();
 
+// for rend3r
+var port = builder.Configuration["POST"];
+
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 // app.MapGet("/", () => "RateShield gateway is running.");
 
 // using the rate shield rv proxy
