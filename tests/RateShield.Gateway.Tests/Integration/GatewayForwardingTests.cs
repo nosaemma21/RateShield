@@ -35,8 +35,7 @@ public sealed class GatewayForwardingTests
                 using var reader = new StreamReader(context.Request.Body);
                 var requestBody = await reader.ReadToEndAsync(cancellationToken);
 
-                return
-                Results.Ok(
+                return Results.Ok(
                     new
                     {
                         Method = context.Request.Method,
@@ -154,11 +153,7 @@ public sealed class GatewayForwardingTests
 
         using var gatewayClient = gatewayFactory.CreateClient();
 
-        var request = new
-        {
-            Name = "RateShield",
-            Mode = "PostForwardingTest",
-        };
+        var request = new { Name = "RateShield", Mode = "PostForwardingTest" };
 
         // act
         using var response = await gatewayClient.PostAsJsonAsync(
@@ -169,9 +164,7 @@ public sealed class GatewayForwardingTests
 
         response.EnsureSuccessStatusCode();
 
-        var body = await response.Content.ReadFromJsonAsync<ForwardedRequest>(
-            cancellationToken
-        );
+        var body = await response.Content.ReadFromJsonAsync<ForwardedRequest>(cancellationToken);
 
         // assert
         Assert.NotNull(body);
@@ -180,6 +173,88 @@ public sealed class GatewayForwardingTests
         Assert.Equal("application/json; charset=utf-8", body.ContentType);
         Assert.Contains("RateShield", body.Body);
         Assert.Contains("PostForwardingTest", body.Body);
+    }
+
+    [Fact]
+    public async Task Gateway_WhenPutRequestIsAllowed_ForwardsBodyToBackend()
+    {
+        // arrange
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var backendBuilder = WebApplication.CreateBuilder();
+
+        backendBuilder.WebHost.UseKestrel(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
+        await using var backend = backendBuilder.Build();
+
+        backend.MapPut(
+            "/api/{**catchAll}",
+            async (HttpContext context) =>
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var requestBody = await reader.ReadToEndAsync(cancellationToken);
+
+                return Results.Ok(
+                    new
+                    {
+                        Method = context.Request.Method,
+                        Path = context.Request.Path.Value,
+                        QueryString = context.Request.QueryString.Value,
+                        ContentType = context.Request.ContentType,
+                        Body = requestBody,
+                    }
+                );
+            }
+        );
+
+        await backend.StartAsync(cancellationToken);
+
+        var server = backend.Services.GetRequiredService<IServer>();
+        var backendAddress = server.Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+
+        await using var gatewayFactory = new WebApplicationFactory<Program>().WithWebHostBuilder(
+            builder =>
+            {
+                builder.ConfigureAppConfiguration(
+                    (_, configuration) =>
+                    {
+                        configuration.AddInMemoryCollection(
+                            new Dictionary<string, string?>
+                            {
+                                [
+                                    "ReverseProxy:Clusters:sample-backend:"
+                                        + "Destinations:sample-backend-primary:Address"
+                                ] = backendAddress,
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        using var gatewayClient = gatewayFactory.CreateClient();
+
+        var request = new { Name = "RateShield", Mode = "PutForwardingTest" };
+
+        // act
+        using var response = await gatewayClient.PutAsJsonAsync(
+            "/api/orders/42",
+            request,
+            cancellationToken
+        );
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<ForwardedRequest>(cancellationToken);
+
+        // assert
+        Assert.NotNull(body);
+        Assert.Equal("PUT", body.Method);
+        Assert.Equal("/api/orders/42", body.Path);
+        Assert.Contains("RateShield", body.Body);
+        Assert.Contains("PutForwardingTest", body.Body);
     }
 
     private sealed record ForwardedRequest(
