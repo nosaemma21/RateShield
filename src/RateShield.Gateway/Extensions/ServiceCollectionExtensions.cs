@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration
     )
     {
+        services.AddRequestTimeouts();
         services.AddReverseProxy().LoadFromConfig(configuration.GetSection("ReverseProxy"));
 
         return services;

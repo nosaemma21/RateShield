@@ -30,15 +30,23 @@ public sealed class GatewayForwardingTests
         backend.MapMethods(
             "/api/{**catchAll}",
             ["GET", "POST", "PUT", "PATCH", "DELETE"],
-            (HttpContext context) =>
+            async (HttpContext context) =>
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var requestBody = await reader.ReadToEndAsync(cancellationToken);
+
+                return
                 Results.Ok(
                     new
                     {
                         Method = context.Request.Method,
                         Path = context.Request.Path.Value,
                         QueryString = context.Request.QueryString.Value,
+                        ContentType = context.Request.ContentType,
+                        Body = requestBody,
                     }
-                )
+                );
+            }
         );
 
         await backend.StartAsync(cancellationToken);
@@ -85,5 +93,100 @@ public sealed class GatewayForwardingTests
         Assert.Equal("?include=items", body.QueryString);
     }
 
-    private sealed record ForwardedRequest(string Method, string Path, string QueryString);
+    [Fact]
+    public async Task Gateway_WhenPostRequestIsAllowed_ForwardsBodyToBackend()
+    {
+        // arrange
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var backendBuilder = WebApplication.CreateBuilder();
+
+        backendBuilder.WebHost.UseKestrel(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
+        await using var backend = backendBuilder.Build();
+
+        backend.MapPost(
+            "/api/{**catchAll}",
+            async (HttpContext context) =>
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var requestBody = await reader.ReadToEndAsync(cancellationToken);
+
+                return Results.Ok(
+                    new
+                    {
+                        Method = context.Request.Method,
+                        Path = context.Request.Path.Value,
+                        QueryString = context.Request.QueryString.Value,
+                        ContentType = context.Request.ContentType,
+                        Body = requestBody,
+                    }
+                );
+            }
+        );
+
+        await backend.StartAsync(cancellationToken);
+
+        var server = backend.Services.GetRequiredService<IServer>();
+        var backendAddress = server.Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+
+        await using var gatewayFactory = new WebApplicationFactory<Program>().WithWebHostBuilder(
+            builder =>
+            {
+                builder.ConfigureAppConfiguration(
+                    (_, configuration) =>
+                    {
+                        configuration.AddInMemoryCollection(
+                            new Dictionary<string, string?>
+                            {
+                                [
+                                    "ReverseProxy:Clusters:sample-backend:"
+                                        + "Destinations:sample-backend-primary:Address"
+                                ] = backendAddress,
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        using var gatewayClient = gatewayFactory.CreateClient();
+
+        var request = new
+        {
+            Name = "RateShield",
+            Mode = "PostForwardingTest",
+        };
+
+        // act
+        using var response = await gatewayClient.PostAsJsonAsync(
+            "/api/orders",
+            request,
+            cancellationToken
+        );
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<ForwardedRequest>(
+            cancellationToken
+        );
+
+        // assert
+        Assert.NotNull(body);
+        Assert.Equal("POST", body.Method);
+        Assert.Equal("/api/orders", body.Path);
+        Assert.Equal("application/json; charset=utf-8", body.ContentType);
+        Assert.Contains("RateShield", body.Body);
+        Assert.Contains("PostForwardingTest", body.Body);
+    }
+
+    private sealed record ForwardedRequest(
+        string Method,
+        string Path,
+        string QueryString,
+        string? ContentType,
+        string Body
+    );
 }

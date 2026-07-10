@@ -28,6 +28,7 @@ var app = builder.Build();
 app.UseRateShieldExceptionHandling();
 
 app.UseRouting(); //so "context.GetEndpoint()" is not null
+app.UseRequestTimeouts();
 app.UseRateShieldCorrelationId();
 app.UseRateShieldRateLimiting();
 
