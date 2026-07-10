@@ -248,3 +248,20 @@ X-RateLimit-Reset
 - Redis distributed storage is not implemented yet.
 - Observability metrics are not fully implemented yet.
 - YARP transforms are not configured yet because local forwarding currently preserves the path as needed.
+
+## Destination Health Check Decision
+
+RateShield enables YARP passive health checks for backend destinations.
+
+Passive health checks observe real proxied traffic. If a backend destination starts failing transport-level requests, YARP can mark that destination as unhealthy and temporarily avoid sending traffic to it.
+
+RateShield does not enable YARP active health checks by default yet.
+
+Active health checks require YARP to send background probe requests to each backend destination. That is useful when all protected backends expose a consistent health endpoint, but RateShield should not assume that every backend has the same health path.
+
+The default decision is:
+
+```text
+Passive health checks: enabled
+Active health checks: deferred
+```
