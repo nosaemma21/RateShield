@@ -3,6 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
+COPY Directory.Build.Props .
+COPY Directory.Packages.Props .
+COPY global.json .
+
 COPY src/RateShield.Core/RateShield.Core.csproj src/RateShield.Core/
 COPY src/RateShield.Infrastructure/RateShield.Infrastructure.csproj src/RateShield.Infrastructure/
 COPY src/RateShield.Gateway/RateShield.Gateway.csproj src/RateShield.Gateway/
