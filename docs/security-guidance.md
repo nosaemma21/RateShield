@@ -110,3 +110,17 @@ CORS is disabled or explicitly allow-listed
 backend destinations use HTTPS when required
 TLS certificate validation remains enabled
 ```
+## Bearer Token Claim Identity
+
+Bearer token claim identity is deferred for a later auth-aware version of RateShield.
+
+Current RateShield identity extraction supports:
+
+- API key header
+- configured client ID header
+- trusted forwarded IP
+- remote IP fallback
+
+A future bearer token provider can extract identity from validated JWT claims such as `sub`, `client_id`, or `azp`.
+
+RateShield should only trust bearer token claims after authentication middleware has validated the token signature, issuer, audience, and expiry. The rate limiter must not parse unvalidated JWTs and treat their claims as trusted identity.
