@@ -257,6 +257,88 @@ public sealed class GatewayForwardingTests
         Assert.Contains("PutForwardingTest", body.Body);
     }
 
+    [Fact]
+    public async Task Gateway_WhenPatchRequestIsAllowed_ForwardsBodyToBackend()
+    {
+        // arrange
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var backendBuilder = WebApplication.CreateBuilder();
+
+        backendBuilder.WebHost.UseKestrel(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
+        await using var backend = backendBuilder.Build();
+
+        backend.MapPatch(
+            "/api/{**catchAll}",
+            async (HttpContext context) =>
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var requestBody = await reader.ReadToEndAsync(cancellationToken);
+
+                return Results.Ok(
+                    new
+                    {
+                        Method = context.Request.Method,
+                        Path = context.Request.Path.Value,
+                        QueryString = context.Request.QueryString.Value,
+                        ContentType = context.Request.ContentType,
+                        Body = requestBody,
+                    }
+                );
+            }
+        );
+
+        await backend.StartAsync(cancellationToken);
+
+        var server = backend.Services.GetRequiredService<IServer>();
+        var backendAddress = server.Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+
+        await using var gatewayFactory = new WebApplicationFactory<Program>().WithWebHostBuilder(
+            builder =>
+            {
+                builder.ConfigureAppConfiguration(
+                    (_, configuration) =>
+                    {
+                        configuration.AddInMemoryCollection(
+                            new Dictionary<string, string?>
+                            {
+                                [
+                                    "ReverseProxy:Clusters:sample-backend:"
+                                        + "Destinations:sample-backend-primary:Address"
+                                ] = backendAddress,
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        using var gatewayClient = gatewayFactory.CreateClient();
+
+        using var request = new HttpRequestMessage(HttpMethod.Patch, "/api/orders/42")
+        {
+            Content = JsonContent.Create(new { Name = "RateShield", Mode = "PatchForwardingTest" }),
+        };
+
+        // act
+        using var response = await gatewayClient.SendAsync(request, cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<ForwardedRequest>(cancellationToken);
+
+        // assert
+        Assert.NotNull(body);
+        Assert.Equal("PATCH", body.Method);
+        Assert.Equal("/api/orders/42", body.Path);
+        Assert.Equal("application/json; charset=utf-8", body.ContentType);
+        Assert.Contains("RateShield", body.Body);
+        Assert.Contains("PatchForwardingTest", body.Body);
+    }
+
     private sealed record ForwardedRequest(
         string Method,
         string Path,
