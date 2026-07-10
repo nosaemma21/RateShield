@@ -183,6 +183,47 @@ This separation is intentional:
 - YARP decides where requests go.
 - RateShield decides whether requests are allowed before forwarding.
 
+## Policy Selection Order
+
+RateShield selects a rate-limit policy using the matched YARP route ID.
+
+The order is:
+
+1. ASP.NET Core routing matches the incoming request to a YARP route.
+2. RateShield reads the matched YARP route ID.
+3. RateShield checks `RateShield:Routes:{routeId}:PolicyName`.
+4. If the route has a configured policy, that named policy is used.
+5. If the route has no specific policy mapping, RateShield falls back to the `Default` policy.
+6. If the selected policy does not exist, startup validation should fail.
+
+Example:
+
+```json
+"RateShield": {
+  "Routes": {
+    "sample-api": {
+      "PolicyName": "Strict"
+    }
+  },
+  "Policies": {
+    "Default": {
+      "Capacity": 100,
+      "RefillTokens": 10,
+      "RefillPeriodSeconds": 1,
+      "RequestCost": 1
+    },
+    "Strict": {
+      "Capacity": 20,
+      "RefillTokens": 2,
+      "RefillPeriodSeconds": 1,
+      "RequestCost": 1
+    }
+  }
+}
+```
+
+In this example, requests matched to the YARP route `sample-api` use the `Strict` policy.
+
 ## Middleware Order
 
 The gateway pipeline is ordered like this:
