@@ -10,6 +10,7 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
 {
     private const string ApiKeySource = "ApiKeyHeader";
     private const string ClientIdSource = "ClientIdHeader";
+    private const string BearerTokenClaimSource = "BearerTokenClaim";
     private const string RemoteIpSource = "RemoteIp";
     private const string ForwardedIpSource = "ForwardedIp";
 
@@ -31,6 +32,11 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
         if (TryGetHeaderValue(context, _options.Identity.ClientIdHeaderName, out var clientId))
         {
             return new ClientIdentity(Value: clientId, Source: ClientIdSource);
+        }
+
+        if (TryGetBearerTokenClaim(context, out var bearerTokenClientId))
+        {
+            return new ClientIdentity(Value: bearerTokenClientId, Source: BearerTokenClaimSource);
         }
 
         if (TryGetTrustedForwardedIp(context, out var forwardedIp))
@@ -130,5 +136,37 @@ public sealed class HttpClientIdentityProvider : IClientIdentityProvider<HttpCon
         }
 
         return false;
+    }
+
+    //helper
+    private bool TryGetBearerTokenClaim(HttpContext context, out string value)
+    {
+        value = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_options.Identity.BearerTokenClientClaimName))
+        {
+            return false;
+        }
+
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        var claim = context.User.Claims.FirstOrDefault(claim =>
+            string.Equals(
+                claim.Type,
+                _options.Identity.BearerTokenClientClaimName,
+                StringComparison.Ordinal
+            )
+        );
+
+        if (string.IsNullOrWhiteSpace(claim?.Value))
+        {
+            return false;
+        }
+
+        value = claim.Value.Trim();
+        return true;
     }
 }

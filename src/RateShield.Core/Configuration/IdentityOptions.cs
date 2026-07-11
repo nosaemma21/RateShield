@@ -5,6 +5,7 @@ public sealed class IdentityOptions
     public string Strategy { get; init; } = "HeaderThenIp";
     public string ApiKeyHeaderName { get; init; } = "X-Api-Key";
     public string ClientIdHeaderName { get; init; } = "X-Client-Id";
+    public string BearerTokenClientClaimName { get; init; } = "sub";
     public bool TrustForwardedHeaders { get; init; }
     public string ForwardedForHeaderName { get; set; } = "X-Forwarded-For";
     public string[] TrustedProxyIpAddresses { get; init; } = [];

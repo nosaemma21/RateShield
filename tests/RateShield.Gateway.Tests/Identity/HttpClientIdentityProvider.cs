@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using RateShield.Core.Configuration;
@@ -250,6 +251,46 @@ public sealed class HttpClientIdentityProviderTests
         //assert
         Assert.Equal("203.0.113.10", identity.Value);
         Assert.Equal("ForwardedIp", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenAuthenticatedBearerClaimExists_UsesBearerTokenClaim()
+    {
+        //arrange
+        var context = CreateHttpContext();
+        context.User = new ClaimsPrincipal(
+            new ClaimsIdentity([new Claim("sub", "user-123")], authenticationType: "Bearer")
+        );
+
+        var provider = CreateProvider();
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("user-123", identity.Value);
+        Assert.Equal("BearerTokenClaim", identity.Source);
+    }
+
+    [Fact]
+    public void ResolveClient_WhenBearerClaimNameIsConfigured_UsesConfiguredClaim()
+    {
+        //arrange
+        var context = CreateHttpContext();
+        context.User = new ClaimsPrincipal(
+            new ClaimsIdentity([new Claim("client_id", "client-abc")], authenticationType: "Bearer")
+        );
+
+        var provider = CreateProvider(
+            new IdentityOptions { BearerTokenClientClaimName = "client_id" }
+        );
+
+        //act
+        var identity = provider.ResolveClient(context);
+
+        //assert
+        Assert.Equal("client-abc", identity.Value);
+        Assert.Equal("BearerTokenClaim", identity.Source);
     }
 
     //helpers------------------**-----------------//
