@@ -68,6 +68,61 @@ Do not print secrets in workflow logs.
 
 Do not echo secret values in scripts.
 
+## CI/CD Secret Storage Strategy
+
+RateShield separates secrets from non-secret deployment settings.
+
+Use GitHub Actions secrets for values that grant access or trigger privileged actions:
+
+```text
+RENDER_API_KEY
+RENDER_WORKSPACE_ID
+RENDER_STAGING_DEPLOY_HOOK_URL
+RENDER_PRODUCTION_DEPLOY_HOOK_URL
+```
+
+Use GitHub Actions variables for non-secret deployment settings:
+
+```text
+ENABLE_STAGING_DEPLOY=true
+RATESHIELD_STAGING_BASE_URL=https://replace-with-staging-url.onrender.com
+RATESHIELD_PRODUCTION_BASE_URL=https://replace-with-production-url.onrender.com
+```
+
+Use Render service environment variables for runtime application configuration:
+
+```text
+ASPNETCORE_ENVIRONMENT=Staging
+ASPNETCORE_URLS=http://0.0.0.0:8080
+RateShield__Storage__Mode=Redis
+RateShield__Storage__FailureBehavior=FailClosed
+RateShield__Redis__ConnectionString=<render-key-value-internal-connection-string>
+ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address=<backend-url>
+```
+
+For production, use the same keys with production values:
+
+```text
+ASPNETCORE_ENVIRONMENT=Production
+RateShield__Redis__ConnectionString=<production-render-key-value-internal-connection-string>
+ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address=<production-backend-url>
+```
+
+Do not store deploy hook URLs, Redis connection strings, API keys, bearer tokens, or provider credentials in:
+
+```text
+appsettings.json
+appsettings.Staging.json
+appsettings.Production.json
+render.yaml
+Dockerfile
+docker-compose.yml
+GitHub Actions YAML
+documentation examples
+```
+
+Committed files may contain placeholders only.
+
 ## Local Development
 
 For local development, use one of:
