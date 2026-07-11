@@ -154,7 +154,7 @@ jobs:
         - name: Trigger Render staging deploy
           run: curl --fail --request POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}"
 
-        - name: Wait for stating to boot
+        - name: Wait for staging to boot
           run: sleep 45
 
         - name: Smoke test staging liveness
@@ -162,3 +162,17 @@ jobs:
 
         - name: Smoke test staging readiness
           run: curl --fail "${{ vars.RATESHIELD_STAGING_BASE_URL }}/health/ready"
+
+   production-deploy: 
+      name: Deploy production
+      runs-on: ubuntu-latest
+      needs: 
+        - docker-build
+      if: github.event_name == 'push' && github.ref_type == 'tag'
+
+      environment:
+        name: production
+      
+      steps: 
+        - name: Trigger Render production deploy
+          run: curl --fail --request POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}"
