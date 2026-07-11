@@ -5,6 +5,7 @@
 
 #personal
 todo.md
+.vscode
 
 # dotenv files
 .env
