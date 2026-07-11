@@ -148,7 +148,7 @@ jobs:
       runs-on: ubuntu-latest
       needs: 
         - docker-build
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main' &&vars.ENABLE_STAGING_DEPLOY == 'true'
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_STAGING_DEPLOY == 'true'
 
       steps: 
         - name: Trigger Render staging deploy
