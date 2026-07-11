@@ -142,4 +142,14 @@ jobs:
             env:
               RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
             run: render blueprints validate render.yaml --workspace ${{ secrets.RENDER_WORKSPACE_ID }} --confirm --output text
-                
+
+   staging-deploy:
+      name: Deploy staging
+      runs-on: ubuntu-latest
+      needs: 
+        - docker-build
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' &&vars.ENABLE_STAGING_DEPLOY == 'true'
+
+      steps: 
+        - name: Trigger Render staging deploy
+          run: curl --fail --request POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}"
