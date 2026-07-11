@@ -1,0 +1,37 @@
+name: Rollback
+
+on: 
+   workflow_dispatch:
+      inputs:
+         environment: 
+            description: Environment to roll back
+            required: true
+            type: choice
+            options: 
+               - staging
+               - production
+         image-tag:
+            description: GHCR image tag to roll back to 
+            required: true
+            type: string
+
+jobs: 
+   rollback:
+      name: Roll back ${{ inputs.environment }}
+      runs-on: ubuntu-latest
+      environment: 
+         name: ${{ inputs.environment }}
+
+      steps:
+         - name: Confirm rollback target
+           run: |
+            echo "Rolling back ${{ inputs.environment }}"
+            echo "Image tag: ${{ inputs.image-tag }}"
+         
+         - name: Trigger staging rollback deploy
+           if: inputs.environment == 'staging'
+           run: curl --fail --request POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}"
+
+         - name: Trigger production rollback deploy
+           if: inputs.environment == 'production'
+           run: curl --fail --request POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}"
