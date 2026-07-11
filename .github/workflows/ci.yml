@@ -153,3 +153,12 @@ jobs:
       steps: 
         - name: Trigger Render staging deploy
           run: curl --fail --request POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}"
+
+        - name: Wait for stating to boot
+          run: sleep 45
+
+        - name: Smoke test staging liveness
+          run: curl --fail "${{ vars.RATESHIELD_STAGING_BASE_URL }}/health/live"
+
+        - name: Smoke test staging readiness
+          run: curl --fail "${{ vars.RATESHIELD_STAGING_BASE_URL }}/health/ready"
