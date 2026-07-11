@@ -123,6 +123,76 @@ documentation examples
 
 Committed files may contain placeholders only.
 
+## Required CI/CD Environment Variables
+
+GitHub Actions uses both secrets and variables.
+
+### GitHub Secrets
+
+These values must be stored as repository or environment secrets:
+
+```text
+RENDER_API_KEY
+RENDER_WORKSPACE_ID
+RENDER_STAGING_DEPLOY_HOOK_URL
+RENDER_PRODUCTION_DEPLOY_HOOK_URL
+```
+
+`RENDER_API_KEY` authenticates Render CLI operations such as Blueprint validation.
+
+`RENDER_WORKSPACE_ID` identifies the Render workspace used when validating `render.yaml`.
+
+`RENDER_STAGING_DEPLOY_HOOK_URL` triggers the staging Render service deployment.
+
+`RENDER_PRODUCTION_DEPLOY_HOOK_URL` triggers the production Render service deployment and should be protected by the GitHub `production` environment approval gate.
+
+Do not store deploy hook URLs as GitHub variables because deploy hooks are credentials.
+
+### GitHub Variables
+
+These values may be stored as repository or environment variables:
+
+```text
+ENABLE_STAGING_DEPLOY
+RATESHIELD_STAGING_BASE_URL
+RATESHIELD_PRODUCTION_BASE_URL
+```
+
+`ENABLE_STAGING_DEPLOY` controls whether pushes to `main` trigger staging deployment.
+
+Use this default until real staging deploys are ready:
+
+```text
+ENABLE_STAGING_DEPLOY=false
+```
+
+Set it to `true` only after the staging Render service, staging Redis, and staging backend destination are configured.
+
+`RATESHIELD_STAGING_BASE_URL` is used by staging smoke tests.
+
+`RATESHIELD_PRODUCTION_BASE_URL` is used by production smoke tests.
+
+### Render Runtime Variables
+
+These values belong in the Render service environment, not in GitHub workflow YAML:
+
+```text
+ASPNETCORE_ENVIRONMENT
+ASPNETCORE_URLS
+RateShield__Storage__Mode
+RateShield__Storage__FailureBehavior
+RateShield__Redis__ConnectionString
+RateShield__Redis__ConnectTimeoutMilliseconds
+RateShield__Redis__CommandTimeoutMilliseconds
+ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address
+```
+
+Keep staging and production values separate.
+
+Staging should use the staging Render service, staging Redis instance, and staging backend URL.
+
+Production should use the production Render service, production Redis instance, and production backend URL.
+
 ## Local Development
 
 For local development, use one of:

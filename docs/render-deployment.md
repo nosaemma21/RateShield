@@ -29,6 +29,67 @@ GitHub push
 11. Manually deploy production only after staging passes.
 12. Verify production health, proxy forwarding, rate-limit headers, and `429` behavior.
 
+## GitHub Actions Deployment Workflow
+
+RateShield uses GitHub Actions for build, package, and deployment orchestration.
+
+The deployment workflow is:
+
+```text
+pull request
+-> restore, format, audit, build, test
+-> validate Render Blueprint
+-> build Docker image
+-> scan Docker image
+```
+
+For pushes to `main`, GitHub Actions also publishes the gateway image to GHCR.
+
+If staging deployment is enabled, the workflow continues:
+
+```text
+push to main
+-> publish Docker image
+-> trigger Render staging deploy hook
+-> wait for staging boot
+-> smoke test /health/live
+-> smoke test /health/ready
+```
+
+Staging deployment is controlled by:
+
+```text
+ENABLE_STAGING_DEPLOY=true
+```
+
+Keep this disabled until the staging Render service, staging Redis instance, and staging backend destination are configured.
+
+Production deployment is release-tag driven:
+
+```text
+push release tag
+-> publish Docker image with release tag
+-> wait for GitHub production environment approval
+-> trigger Render production deploy hook
+-> wait for production boot
+-> smoke test /health/live
+-> smoke test /health/ready
+```
+
+Production deployments must use the GitHub `production` environment gate with required reviewers.
+
+The workflow should not deploy production from ordinary branch pushes.
+
+Use release tags for production promotion:
+
+```text
+v1.0.0
+v1.0.1
+v1.1.0
+```
+
+Each release tag should map to an immutable Docker image tag in GHCR.
+
 ## Required Render Settings
 
 - Service type: Web Service
