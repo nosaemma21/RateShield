@@ -283,6 +283,25 @@ X-RateLimit-Remaining
 X-RateLimit-Reset
 ```
 
+### Rate-Limit Header Compatibility Decision
+
+RateShield keeps the existing `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and
+`X-RateLimit-Reset` fields for compatibility with clients that already
+understand the common de facto convention. Rejected requests also include the
+standard `Retry-After` field.
+
+RateShield does not currently emit `RateLimit-Limit`, `RateLimit-Remaining`, or
+`RateLimit-Reset`. Those names were defined by older Internet-Drafts and did not
+become a finalized HTTP standard. The active May 2026 IETF draft instead defines
+the combined `RateLimit` and `RateLimit-Policy` fields, and remains a work in
+progress. RateShield should revisit adoption after the specification is
+published as an RFC so its public contract is not tied to a superseded draft.
+
+References:
+
+- [Current IETF RateLimit header-fields draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/)
+- [RFC 6585: 429 Too Many Requests](https://www.rfc-editor.org/rfc/rfc6585.html#section-4)
+
 ## Current Limitations
 
 - `X-Forwarded-For` is not trusted yet.
