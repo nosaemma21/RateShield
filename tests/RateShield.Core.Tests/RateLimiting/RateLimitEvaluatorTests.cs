@@ -254,6 +254,42 @@ public sealed class RateLimitEvaluatorTests
         Assert.False(second.IsAllowed);
     }
 
+    [Fact]
+    public void Evaluate_WhenManyClientUseSameRoute_CreatesIndependentBuckets()
+    {
+        //arrange
+        var now = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+        var policy = CreatePolicy(capacity: 1, refillTokens: 1);
+        var bucketStore = new InMemoryTokenBucketStore();
+
+        var evaluator = new RateLimitEvaluator(
+            clock: new FakeClock(now),
+            policyResolver: new FakeRateLimitResolver(policy),
+            bucketStore: bucketStore,
+            limiter: new TokenBucketLimiter(),
+            lockProvider: new TokenBucketLockProvider()
+        );
+
+        const int clientCount = 1000;
+
+        //act
+        var decisions = Enumerable
+            .Range(0, clientCount)
+            .Select(index =>
+                evaluator.Evaluate(
+                    new RateLimitEvaluationRequest(
+                        Client: new ClientIdentity($"client-{index}", "Test"),
+                        RouteId: "sample-api"
+                    )
+                )
+            )
+            .ToArray();
+
+        //assert
+        Assert.All(decisions, decision => Assert.True(decision.IsAllowed));
+        Assert.Equal(clientCount, bucketStore.Count);
+    }
+
     private static RateLimitEvaluator CreateEvaluator(DateTimeOffset now, RateLimitPolicy policy)
     {
         return CreateEvaluator(new FakeClock(now), policy);
