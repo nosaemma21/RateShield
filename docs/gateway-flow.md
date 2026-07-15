@@ -315,10 +315,11 @@ References:
 
 ## Current Limitations
 
-- `X-Forwarded-For` is not trusted yet.
-- Redis distributed storage is not implemented yet.
-- Observability metrics are not fully implemented yet.
-- YARP transforms are not configured yet because local forwarding currently preserves the path as needed.
+Redis storage, trusted forwarded-header handling, and gateway metrics are now
+implemented. The remaining operational and product boundaries are maintained in
+[Known limitations](known-limitations.md), including identity trust, in-memory
+scaling, Redis dependency behavior, backend readiness, metrics access, and
+deployment validation status.
 
 ## Destination Health Check Decision
 
