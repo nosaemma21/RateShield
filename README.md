@@ -8,6 +8,7 @@ RateShield is an ASP.NET Core reverse-proxy gateway with a token-bucket rate lim
 - [Gateway flow](docs/gateway-flow.md)
 - [Dependency management](docs/dependency-management.md)
 - [Load and performance results](docs/performance.md): local k6 workloads, measurements, reproduction commands, and benchmark limitations.
+- [Testing guide](docs/testing.md): .NET test suites, Redis integration tests, CI-equivalent commands, k6 usage, and troubleshooting.
 - [Trusted proxies](docs/trusted-proxies.md): explains when RateShield can safely trust `X-Forwarded-For`.
 
 ## Configuration
