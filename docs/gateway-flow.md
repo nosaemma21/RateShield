@@ -167,6 +167,9 @@ Example:
   "Routes": {
     "sample-api": {
       "PolicyName": "Default"
+    },
+    "strict-api": {
+      "PolicyName": "Strict"
     }
   }
 }
@@ -176,7 +179,15 @@ This means:
 
 ```text
 YARP route sample-api uses RateShield policy Default.
+YARP route strict-api uses RateShield policy Strict.
 ```
+
+The sample YARP configuration matches `/api/strict/{**catch-all}` with the
+`strict-api` route before the broader `/api/{**catch-all}` route. Its `Order`
+value is `-1`; lower YARP order values have higher matching precedence. Both
+routes forward to the same sample-backend cluster, but RateShield maintains
+separate buckets because the matched route ID and policy name are part of the
+bucket key.
 
 This separation is intentional:
 
