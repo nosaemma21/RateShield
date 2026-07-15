@@ -167,6 +167,9 @@ Example:
   "Routes": {
     "sample-api": {
       "PolicyName": "Default"
+    },
+    "strict-api": {
+      "PolicyName": "Strict"
     }
   }
 }
@@ -176,7 +179,15 @@ This means:
 
 ```text
 YARP route sample-api uses RateShield policy Default.
+YARP route strict-api uses RateShield policy Strict.
 ```
+
+The sample YARP configuration matches `/api/strict/{**catch-all}` with the
+`strict-api` route before the broader `/api/{**catch-all}` route. Its `Order`
+value is `-1`; lower YARP order values have higher matching precedence. Both
+routes forward to the same sample-backend cluster, but RateShield maintains
+separate buckets because the matched route ID and policy name are part of the
+bucket key.
 
 This separation is intentional:
 
@@ -283,12 +294,32 @@ X-RateLimit-Remaining
 X-RateLimit-Reset
 ```
 
+### Rate-Limit Header Compatibility Decision
+
+RateShield keeps the existing `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and
+`X-RateLimit-Reset` fields for compatibility with clients that already
+understand the common de facto convention. Rejected requests also include the
+standard `Retry-After` field.
+
+RateShield does not currently emit `RateLimit-Limit`, `RateLimit-Remaining`, or
+`RateLimit-Reset`. Those names were defined by older Internet-Drafts and did not
+become a finalized HTTP standard. The active May 2026 IETF draft instead defines
+the combined `RateLimit` and `RateLimit-Policy` fields, and remains a work in
+progress. RateShield should revisit adoption after the specification is
+published as an RFC so its public contract is not tied to a superseded draft.
+
+References:
+
+- [Current IETF RateLimit header-fields draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/)
+- [RFC 6585: 429 Too Many Requests](https://www.rfc-editor.org/rfc/rfc6585.html#section-4)
+
 ## Current Limitations
 
-- `X-Forwarded-For` is not trusted yet.
-- Redis distributed storage is not implemented yet.
-- Observability metrics are not fully implemented yet.
-- YARP transforms are not configured yet because local forwarding currently preserves the path as needed.
+Redis storage, trusted forwarded-header handling, and gateway metrics are now
+implemented. The remaining operational and product boundaries are maintained in
+[Known limitations](known-limitations.md), including identity trust, in-memory
+scaling, Redis dependency behavior, backend readiness, metrics access, and
+deployment validation status.
 
 ## Destination Health Check Decision
 

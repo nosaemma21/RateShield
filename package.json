@@ -1,0 +1,28 @@
+{
+  "name": "rateshield",
+  "version": "1.0.0",
+  "description": "RateShield is an ASP.NET Core reverse-proxy gateway with a token-bucket rate limiter in front of YARP.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nosaemma21/RateShield.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nosaemma21/RateShield/issues"
+  },
+  "homepage": "https://github.com/nosaemma21/RateShield#readme",
+  "devDependencies": {
+    "@types/k6": "^2.0.0"
+  }
+}

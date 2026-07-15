@@ -3,6 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
+COPY Directory.Build.props .
+COPY Directory.Packages.props .
+COPY global.json .
+
 COPY src/RateShield.SampleBackend/RateShield.SampleBackend.csproj src/RateShield.SampleBackend/
 
 RUN dotnet restore src/RateShield.SampleBackend/RateShield.SampleBackend.csproj
