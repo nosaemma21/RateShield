@@ -130,6 +130,7 @@ Do not use `localhost` for container-to-container forwarding. Inside a container
 5011 -> local gateway
 5255 -> local sample backend
 8080 -> Docker Compose gateway
+8081 -> Docker Compose sample backend (direct benchmark access)
 6379 -> Docker Compose Redis
 ```
 
