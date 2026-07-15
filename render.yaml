@@ -32,7 +32,7 @@ services:
       - key: RateShield__Redis__CommandTimeoutMilliseconds
         value: "1000"
       - key: RateShield__Identity__TrustForwardedHeaders
-        value: "true"
+        value: "false"
       - key: RateShield__Policies__Default__Capacity
         value: "100"
       - key: RateShield__Policies__Default__RefillTokens
@@ -79,7 +79,7 @@ services:
       - key: RateShield__Redis__CommandTimeoutMilliseconds
         value: "1000"
       - key: RateShield__Identity__TrustForwardedHeaders
-        value: "true"
+        value: "false"
       - key: RateShield__Policies__Default__Capacity
         value: "100"
       - key: RateShield__Policies__Default__RefillTokens
