@@ -110,6 +110,126 @@ Example:
 RateShield__Routes__sample-api__PolicyName=Strict
 ```
 
+## Add A New Rate-Limit Policy
+
+A policy defines the token-bucket behavior. A route mapping decides which YARP
+route uses that policy. Adding a policy without mapping a route to it does not
+change request behavior.
+
+The example below adds an `Uploads` policy for a YARP route whose exact route ID
+is `upload-api`.
+
+### 1. Choose The Bucket Values
+
+For this example:
+
+```text
+Capacity            = 20
+RefillTokens         = 5
+RefillPeriodSeconds  = 60
+RequestCost          = 1
+```
+
+This allows an initial burst of 20 requests. Afterward, the bucket earns five
+tokens every 60 seconds. Because each request costs one token, the long-term
+refill allowance is five requests per minute. Increasing `RequestCost` makes
+each request consume more of the same bucket capacity.
+
+### 2. Add The Policy And Route Mapping
+
+Insert the new entries into the existing `Policies` and `Routes` dictionaries
+under `RateShield`. Do not create a second top-level `RateShield` section.
+
+```json
+{
+  "RateShield": {
+    "Policies": {
+      "Uploads": {
+        "Capacity": 20,
+        "RefillTokens": 5,
+        "RefillPeriodSeconds": 60,
+        "RequestCost": 1
+      }
+    },
+    "Routes": {
+      "upload-api": {
+        "PolicyName": "Uploads"
+      }
+    }
+  }
+}
+```
+
+`upload-api` must exactly match a key under `ReverseProxy:Routes`. Policy and
+route names are configuration identifiers; keep their spelling and casing
+consistent.
+
+If the YARP route already exists, only the RateShield policy and mapping are
+needed. If it does not exist, also define the YARP route and its cluster:
+
+```json
+{
+  "ReverseProxy": {
+    "Routes": {
+      "upload-api": {
+        "ClusterId": "sample-backend",
+        "Match": {
+          "Path": "/api/uploads/{**catch-all}"
+        }
+      }
+    }
+  }
+}
+```
+
+When route patterns overlap, configure YARP route precedence intentionally so
+the request matches the expected route ID. RateShield applies the policy for
+the route selected by YARP.
+
+### 3. Use Environment Variables In Hosted Environments
+
+The same policy and mapping can be supplied without changing JSON:
+
+```text
+RateShield__Policies__Uploads__Capacity=20
+RateShield__Policies__Uploads__RefillTokens=5
+RateShield__Policies__Uploads__RefillPeriodSeconds=60
+RateShield__Policies__Uploads__RequestCost=1
+RateShield__Routes__upload-api__PolicyName=Uploads
+```
+
+If the YARP route is also new, its environment-variable form is:
+
+```text
+ReverseProxy__Routes__upload-api__ClusterId=sample-backend
+ReverseProxy__Routes__upload-api__Match__Path=/api/uploads/{**catch-all}
+```
+
+### 4. Restart And Verify
+
+RateShield binds and validates policy configuration at startup, so restart or
+redeploy the gateway after changing these values. Startup fails if a route
+mapping names a policy that does not exist or if a policy value is invalid.
+
+Use one stable test identity and send more requests than the configured
+capacity:
+
+```powershell
+1..25 | ForEach-Object {
+    curl.exe -s -o NUL -w "%{http_code}`n" `
+        -H "X-Client-Id: uploads-policy-test" `
+        http://localhost:8080/api/uploads/example
+}
+```
+
+For a fresh bucket, the first 20 rapid requests should return HTTP 200 and later
+requests should return HTTP 429 until tokens refill. Inspect a response with
+`curl.exe -i` and confirm that `X-RateLimit-Limit` reports `20`; rejected
+responses should also contain `Retry-After`.
+
+Use a new client ID when repeating the test immediately, especially in Redis
+mode, so an existing bucket does not change the expected starting capacity.
+
 ## Observability
 
 | JSON key | Environment variable | Type | Default | Description |
