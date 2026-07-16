@@ -28,9 +28,16 @@ public sealed class TokenBucketCleanupWorker : BackgroundService
         // the interval execution timer
         using var timer = new PeriodicTimer(interval);
 
-        while (await timer.WaitForNextTickAsync(stoppingToken))
+        try
         {
-            _cleanupService.RemoveIdleBuckets();
+            while (await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                _cleanupService.RemoveIdleBuckets();
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Graceful host shutdown cancels the timer wait.
         }
     }
 

@@ -46,15 +46,11 @@ public static class DependencyInjection
 
             services.AddSingleton<IConnectionMultiplexer>(_ =>
             {
-                var redisConfiguration = ConfigurationOptions.Parse(connectionString!);
-
-                redisConfiguration.ConnectTimeout = options.Redis.ConnectTimeoutMilliseconds;
-
-                redisConfiguration.AsyncTimeout = options.Redis.CommandTimeoutMilliseconds;
-
-                redisConfiguration.SyncTimeout = options.Redis.CommandTimeoutMilliseconds;
-
-                redisConfiguration.AbortOnConnectFail = false;
+                var redisConfiguration = RedisConnectionConfiguration.Create(
+                    connectionString!,
+                    options.Redis.ConnectTimeoutMilliseconds,
+                    options.Redis.CommandTimeoutMilliseconds
+                );
 
                 return ConnectionMultiplexer.Connect(redisConfiguration);
             });

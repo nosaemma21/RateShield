@@ -5,6 +5,7 @@ using RateShield.Core.Identity;
 using RateShield.Gateway.Identity;
 using RateShield.Gateway.Validation;
 using RateShield.Infrastructure;
+using StackExchange.Redis;
 
 namespace RateShield.Gateway.Extensions;
 
@@ -53,12 +54,8 @@ public static class ServiceCollectionExtensions
 
         if (string.Equals(storageMode, "Redis", StringComparison.OrdinalIgnoreCase))
         {
-            var connectionString = configuration[
-                $"{RateShieldOptions.SectionName}:Redis:ConnectionString"
-            ];
-
             healthChecks.AddRedis(
-                redisConnectionString: connectionString!,
+                sp => sp.GetRequiredService<IConnectionMultiplexer>(),
                 name: "redis",
                 tags: ["ready"]
             );
