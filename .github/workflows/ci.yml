@@ -84,13 +84,18 @@ jobs:
             password: ${{secrets.GITHUB_TOKEN}}
 
          - name: Set Docker image name
-           run: echo "IMAGE_NAME=ghcr.io/${{github.repository_owner}}/rateshield-gateway" >> $GITHUB_ENV
+           run: |
+                echo "IMAGE_NAME=ghcr.io/${{github.repository_owner}}/rateshield-gateway" >> $GITHUB_ENV
+                echo "BACKEND_IMAGE_NAME=ghcr.io/${{github.repository_owner}}/rateshield-sample-backend" >> $GITHUB_ENV
 
          - name: Build Docker image
            run: |
                 docker build -t $IMAGE_NAME:${{github.sha}} -t $IMAGE_NAME:latest .
+                docker build -f src/RateShield.SampleBackend/Dockerfile -t $BACKEND_IMAGE_NAME:${{github.sha}} -t $BACKEND_IMAGE_NAME:latest .
+
                 if [ "${{ github.ref_type }}" = "tag" ]; then
                   docker tag $IMAGE_NAME:${{github.sha}} $IMAGE_NAME:${{ github.ref_name }}
+                  docker tag $BACKEND_IMAGE_NAME:${{github.sha}} $BACKEND_IMAGE_NAME:${{ github.ref_name }}
                 fi
 
          - name: Scan Docker image for vulnerabilities
@@ -103,27 +108,48 @@ jobs:
             vuln-type: os,library
             severity: CRITICAL,HIGH
 
-         - name: Validate Docker image starts
+         - name: Scan sample backend Docker image for vulnerabilities
+           uses: aquasecurity/trivy-action@v0.36.0
+           with:
+            image-ref: ${{ env.BACKEND_IMAGE_NAME }}:${{github.sha}}
+            format: table
+            exit-code: "1"
+            ignore-unfixed: true
+            vuln-type: os,library
+            severity: CRITICAL,HIGH
+
+         - name: Validate Docker images start
            run: |
-                docker run --rm -d --name rateshield-gateway-ci -p 8080:8080 \
-                  -e ASPNETCORE_ENVIRONMENT=Production \
-                  -e ASPNETCORE_URLS=http://0.0.0.0:8080 \
-                  -e RateShield__Storage__Mode=InMemory \
-                  $IMAGE_NAME:${{github.sha}}
-          
-                  sleep 10
+            docker run --rm -d --name rateshield-gateway-ci -p 8080:8080 \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e ASPNETCORE_URLS=http://0.0.0.0:8080 \
+            -e RateShield__Storage__Mode=InMemory \
+            $IMAGE_NAME:${{github.sha}}
 
-                  curl --fail http://localhost:8080/health/live
+            sleep 10
+            curl --fail http://localhost:8080/health/live
+            docker stop rateshield-gateway-ci
 
-                  docker stop rateshield-gateway-ci
+            docker run --rm -d --name rateshield-sample-backend-ci -p 8081:8080 \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e ASPNETCORE_URLS=http://0.0.0.0:8080 \
+            $BACKEND_IMAGE_NAME:${{github.sha}}
 
-         - name: push Docker image
+            sleep 10
+            curl --fail http://localhost:8081/health/ready
+            docker stop rateshield-sample-backend-ci
+
+         - name: Push Docker images
            run: |
-                docker push $IMAGE_NAME:${{github.sha}}
-                docker push $IMAGE_NAME:latest
-                if [ "${{ github.ref_type }}" = "tag" ]; then
-                  docker push $IMAGE_NAME:${{ github.ref_name }}
-                fi
+            docker push $IMAGE_NAME:${{github.sha}}
+            docker push $IMAGE_NAME:latest
+            docker push $BACKEND_IMAGE_NAME:${{github.sha}}
+            docker push $BACKEND_IMAGE_NAME:latest
+
+            if [ "${{ github.ref_type }}" = "tag" ]; then
+              docker push $IMAGE_NAME:${{ github.ref_name }}
+              docker push $BACKEND_IMAGE_NAME:${{ github.ref_name }}
+            fi
 
    validate-render-blueprint:
       name: Validate Render blueprint
