@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace RateShield.Gateway.Tests.Integration;
 
@@ -555,6 +556,44 @@ public sealed class GatewayForwardingTests
 
         Assert.True(response.Headers.TryGetValues("X-Backend-Region", out var regionValues));
         Assert.Contains("local-test", regionValues);
+    }
+
+    [Fact]
+    public async Task Gateway_WhenBackendIsUnavailable_ReturnsBadGatewayNotRateLimited()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        await using var gatewayFactory = new WebApplicationFactory<Program>().WithWebHostBuilder(
+            builder =>
+            {
+                builder.ConfigureLogging(logging => logging.ClearProviders());
+                builder.ConfigureAppConfiguration(
+                    (_, configuration) =>
+                    {
+                        configuration.AddInMemoryCollection(
+                            new Dictionary<string, string?>
+                            {
+                                [
+                                    "ReverseProxy:Clusters:sample-backend:"
+                                        + "Destinations:sample-backend-primary:Address"
+                                ] = "http://127.0.0.1:1/",
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        using var gatewayClient = gatewayFactory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/backend-check");
+        request.Headers.Add("X-Client-Id", "unavailable-backend-test-client");
+
+        using var response = await gatewayClient.SendAsync(request, cancellationToken);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
+        Assert.DoesNotContain("127.0.0.1", body);
     }
 
     private sealed record ForwardedRequest(

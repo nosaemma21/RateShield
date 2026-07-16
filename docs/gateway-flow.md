@@ -342,11 +342,11 @@ Active health checks: deferred
 
 RateShield treats unavailable backend destinations as upstream availability failures, not rate-limit failures.
 
-If YARP has no usable backend destination for a matched route, the gateway should return `503 Service Unavailable`. RateShield should not convert this into `429 Too Many Requests` because the client did not exceed its quota.
+If YARP cannot connect to the selected backend destination, the gateway returns `502 Bad Gateway`. RateShield does not convert this into `429 Too Many Requests` because the client did not exceed its quota.
 
 This keeps operational signals clear:
 
 ```text
 429 Too Many Requests -> client exceeded rate limit
-503 Service Unavailable -> backend destination unavailable
+502 Bad Gateway -> backend connection or forwarding failure
 ```
