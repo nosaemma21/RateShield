@@ -54,7 +54,9 @@ public static class DependencyInjection
 
                 redisConfiguration.SyncTimeout = options.Redis.CommandTimeoutMilliseconds;
 
-                return ConnectionMultiplexer.Connect(connectionString!);
+                redisConfiguration.AbortOnConnectFail = false;
+
+                return ConnectionMultiplexer.Connect(redisConfiguration);
             });
             services.AddSingleton<
                 IRedisTokenBucketScriptExecutor,
