@@ -20,12 +20,12 @@ dotnet run --project src/RateShield.SampleBackend
 Direct backend checks:
 
 ```powershell
-curl -i http://localhost:5255/
-curl -i "http://localhost:5255/api/hello?source=backend"
-curl -i http://localhost:5255/slow
-curl -i http://localhost:5255/fail
-curl -i http://localhost:5255/headers
-curl -i -X POST http://localhost:5255/echo -H "Content-Type: application/json" -d "{\"message\":\"hello\"}"
+curl.exe -i http://localhost:5255/
+curl.exe -i "http://localhost:5255/api/hello?source=backend"
+curl.exe -i http://localhost:5255/slow
+curl.exe -i http://localhost:5255/fail
+curl.exe -i http://localhost:5255/headers
+curl.exe -i -X POST http://localhost:5255/echo -H "Content-Type: application/json" -d "{\"message\":\"hello\"}"
 ```
 
 ## Run The Gateway
@@ -39,9 +39,9 @@ dotnet run --project src/RateShield.Gateway
 Gateway checks:
 
 ```powershell
-curl -i http://localhost:5011/health/live
-curl -i http://localhost:5011/health/ready
-curl -i "http://localhost:5011/api/hello?source=gateway"
+curl.exe -i http://localhost:5011/health/live
+curl.exe -i http://localhost:5011/health/ready
+curl.exe -i "http://localhost:5011/api/hello?source=gateway"
 ```
 
 ## Test Rate Limiting
@@ -60,8 +60,8 @@ Use a strict temporary policy while testing repeated requests:
 Then call the same protected route twice:
 
 ```powershell
-curl -i http://localhost:5011/api/hello
-curl -i http://localhost:5011/api/hello
+curl.exe -i http://localhost:5011/api/hello
+curl.exe -i http://localhost:5011/api/hello
 ```
 
 Expected result:
@@ -93,8 +93,8 @@ docker compose up --build
 Docker checks:
 
 ```powershell
-curl -i http://localhost:8080/health/ready
-curl -i "http://localhost:8080/api/hello?source=compose"
+curl.exe -i http://localhost:8080/health/ready
+curl.exe -i "http://localhost:8080/api/hello?source=compose"
 ```
 
 Compose runs RateShield in Redis mode by default:

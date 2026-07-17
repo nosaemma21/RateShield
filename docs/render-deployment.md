@@ -43,7 +43,9 @@ pull request
 -> scan Docker image
 ```
 
-For pushes to `main`, GitHub Actions also publishes the gateway image to GHCR.
+The current workflow publishes both the gateway and sample-backend images to
+GHCR after the required jobs pass. It publishes commit-SHA and `latest` tags on
+pull requests and `main` pushes, and adds the Git tag for release-tag runs.
 
 If staging deployment is enabled, the workflow continues:
 
@@ -96,7 +98,7 @@ Each release tag should map to an immutable Docker image tag in GHCR.
 - Runtime: Docker image
 - Health check path: `/health/ready`
 - Internal port: `8080`
-- Environment: `Production`
+- Environment: `Staging` for staging and `Production` for production
 
 ## Environments
 
@@ -139,7 +141,7 @@ RateShield__Storage__FailureBehavior=FailClosed
 RateShield__Redis__ConnectionString=<render-key-value-internal-connection-string>
 RateShield__Redis__ConnectTimeoutMilliseconds=5000
 RateShield__Redis__CommandTimeoutMilliseconds=1000
-RateShield__Identity__TrustForwardedHeaders=true
+RateShield__Identity__TrustForwardedHeaders=false
 RateShield__Routes__sample-api__PolicyName=Default
 ReverseProxy__Clusters__sample-backend__Destinations__sample-backend-primary__Address=<hosted backend URL>
 ```

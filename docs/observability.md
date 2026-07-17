@@ -133,14 +133,14 @@ dotnet run --project src/RateShield.Gateway
 Send traffic through a protected route:
 
 ```powershell
-curl -i http://localhost:5011/api/hello
-curl -i http://localhost:5011/api/hello
+curl.exe -i http://localhost:5011/api/hello
+curl.exe -i http://localhost:5011/api/hello
 ```
 
 Inspect metrics:
 
 ```powershell
-curl http://localhost:5011/metrics
+curl.exe http://localhost:5011/metrics
 ```
 
 Look for:
