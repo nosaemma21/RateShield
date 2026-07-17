@@ -1,4 +1,4 @@
-# RateShield
+# 🛡️ RateShield
 
 [![CI](https://github.com/nosaemma21/RateShield/actions/workflows/ci.yml/badge.svg)](https://github.com/nosaemma21/RateShield/actions/workflows/ci.yml)
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)
@@ -17,7 +17,7 @@ gateway instances.
 > take longer while the service wakes up. Staging is the selected hosted scope;
 > a paid production environment is intentionally not provisioned.
 
-## Why This Project Exists
+## 🎯 Why This Project Exists
 
 APIs need a protection layer that behaves consistently as traffic and instance
 count grow. RateShield keeps that concern at the gateway boundary: it identifies
@@ -28,7 +28,7 @@ The repository is a production-foundation project rather than a hosted SaaS
 product. It demonstrates distributed state, failure behavior, configuration
 validation, observability, load testing, container delivery, and staged CI/CD.
 
-## Highlights
+## ✨ Highlights
 
 - Route-specific token-bucket policies with capacity, refill, and request-cost
   controls.
@@ -44,7 +44,7 @@ validation, observability, load testing, container delivery, and staged CI/CD.
 - GitHub Actions for formatting, vulnerability auditing, tests, coverage,
   container scanning, GHCR publishing, Render validation, and staging deployment.
 
-## Request Flow
+## 🧭 Request Flow
 
 ```mermaid
 flowchart LR
@@ -65,7 +65,7 @@ flowchart LR
 Only YARP-matched proxy routes consume quota. Gateway-owned endpoints such as
 `/health/live`, `/health/ready`, and `/metrics` bypass the limiter.
 
-## Try The Hosted Gateway
+## 🌐 Try The Hosted Gateway
 
 From PowerShell:
 
@@ -80,7 +80,7 @@ The proxied response comes from the separately deployed sample backend. Repeat
 the second request to watch `X-RateLimit-Remaining` change; a burst beyond the
 configured capacity returns `429 Too Many Requests` with `Retry-After`.
 
-## Run Locally With Docker
+## 🐳 Run Locally With Docker
 
 Prerequisites: Docker Desktop with Compose.
 
@@ -110,7 +110,7 @@ docker compose down
 For separate `dotnet run` terminals and endpoint examples, see the
 [local run guide](docs/local-run.md).
 
-## Configuration Example
+## ⚙️ Configuration Example
 
 RateShield uses normal ASP.NET Core configuration layering. Nested environment
 variables use double underscores:
@@ -129,7 +129,7 @@ Secrets stay outside source control. See the
 [configuration reference](docs/configuration.md) for every setting and the
 [secrets guide](docs/secrets.md) for safe handling.
 
-## Tests And Quality Gates
+## 🧪 Tests And Quality Gates
 
 Run the .NET test suite:
 
@@ -166,7 +166,7 @@ These are development measurements, not production capacity promises. Full
 numbers, environment details, and limitations are documented in
 [load and performance results](docs/performance.md).
 
-## Repository Structure
+## 🗂️ Repository Structure
 
 ```text
 src/RateShield.Core            domain models and rate-limiting contracts
@@ -177,7 +177,7 @@ tests/                         unit, integration, Redis, and k6 tests
 docs/                          operations, security, architecture, and deployment
 ```
 
-## CI/CD And Deployment
+## 🚀 CI/CD And Deployment
 
 Pull requests run formatting, dependency auditing, Release builds, tests with
 coverage, Render Blueprint validation, and vulnerability scans for both Docker
@@ -196,7 +196,7 @@ The production path is designed and documented but deliberately unprovisioned
 because this portfolio deployment uses free-tier resources. See the
 [Render deployment guide](docs/render-deployment.md).
 
-## Documentation
+## 📚 Documentation
 
 - [Gateway flow](docs/gateway-flow.md) — request ordering, YARP routing, policy
   resolution, headers, and failure responses.
@@ -213,7 +213,7 @@ because this portfolio deployment uses free-tier resources. See the
 - [Known limitations](docs/known-limitations.md) — explicit product boundaries
   and work still required before a real production rollout.
 
-## Current Scope
+## 🔭 Current Scope
 
 RateShield is a serious gateway foundation, but it does not claim to replace a
 full API-management platform. Current boundaries include process-local metrics,
